@@ -1,50 +1,134 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: (template) → 1.0.0
+New principles: 5 (all new — first ratification from blank template)
+  I.   Credentials Never Exposed
+  II.  Proxy-First Architecture
+  III. Demonstrator Clarity
+  IV.  Test-First (TDD)
+  V.   Modern, Responsive UI
+Added sections: Technical Constraints, Use Case Scope
+Removed sections: none
+Templates checked:
+  ✅ .specify/templates/plan-template.md — Constitution Check gates aligned
+  ✅ .specify/templates/spec-template.md — no mandatory sections conflict
+  ✅ .specify/templates/tasks-template.md — task types align with TDD principle
+  ✅ README.md — no outdated references
+Deferred TODOs: none
+-->
+
+# WIZIDEE Demo App Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Credentials Never Exposed
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+WIZIDEE API credentials (username, password, JWT tokens) MUST remain exclusively
+server-side. No credential, token, or API key may appear in:
+- Frontend source code or browser-accessible bundles
+- Git history (use `.env.local`, never committed)
+- Client-side state, logs, or API responses forwarded to the browser
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+Rationale: The Postman collection contains production credentials. A single
+accidental exposure would compromise the live WIZIDEE account.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Proxy-First Architecture
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+All calls to external APIs (WIZIDEE, ApiRTC) MUST route through Next.js API
+routes (`/api/*`). The frontend MUST NOT call `wizidee.com` or `apirtc.io`
+endpoints directly.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- Next.js route handles auth token lifecycle (acquire, cache, refresh)
+- Frontend sends documents to `/api/wizidee/*`, never to the upstream directly
+- Each WIZIDEE flow step (recognize → analyze → consolidate) has its own route
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+Rationale: Enforces the single security boundary. Simplifies frontend code.
+Makes the integration flow explicit and auditable in one place.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### III. Demonstrator Clarity
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+This codebase is a **reference implementation** that developers will read to
+understand WIZIDEE integration. Code MUST be simple and self-explanatory.
+
+- No premature abstractions: logic used once stays inline
+- No over-engineering: avoid patterns that obscure the WIZIDEE API flow
+- Comments are required only where intent is non-obvious
+- A developer unfamiliar with WIZIDEE MUST be able to follow the full
+  recognize → analyze flow by reading the code without external docs
+
+Rationale: The primary deliverable is comprehension, not production hardening.
+Complexity that aids understanding is welcome; complexity that obscures it is not.
+
+### IV. Test-First (TDD)
+
+Tests MUST be written before implementation for:
+- All Next.js API routes (WIZIDEE proxy routes)
+- All React components that handle document capture or display results
+
+Red → Green → Refactor cycle is enforced. WIZIDEE HTTP calls are mocked
+in tests (no real API calls in the test suite).
+
+Rationale: A demonstrator with broken flows teaches bad practices. TDD ensures
+each use case is verifiably functional before it is shown to stakeholders.
+
+### V. Modern, Responsive UI
+
+The user interface MUST be polished, fast, and usable on mobile devices, as
+document capture frequently happens on a phone.
+
+- Every async operation MUST have a visible loading state
+- Extraction results MUST be shown in both human-readable card format AND
+  raw JSON (for developer audience)
+- Document capture MUST support both file upload and live camera capture
+- UI MUST work at mobile viewport widths (document photos taken on phone)
+
+Rationale: The app is shown to prospects and business stakeholders in the
+context of a video call. First impressions matter. A slow or broken UI
+undermines confidence in the WIZIDEE product itself.
+
+## Technical Constraints
+
+- **Framework**: Next.js (App Router) with TypeScript
+- **Styling**: Tailwind CSS (or equivalent utility-first framework)
+- **Video**: ApiRTC SDK for in-session document capture flows
+- **Testing**: Jest + React Testing Library
+- **Git workflow**: Trunk-based development (commit to `main`, short-lived branches < 1 day)
+- **Language**: English for code, comments, and commit messages
+- **Credentials**: Stored in `.env.local` only — `.env.local` is gitignored
+
+## Use Case Scope
+
+The following 13 use cases are in scope, implemented in priority order:
+
+**MVP (UC1–UC4)**
+- UC1: Identity verification — CNI / Passport
+- UC2: Proof of address
+- UC3: Proof of income
+- UC4: RIB / Bank account details
+
+**Extended**
+- UC5: Driver's license
+- UC6: Health card (Carte vitale)
+- UC7: Company registration (KBIS)
+- UC8: Residence permit
+- UC9: Biometric identity check (CNI + selfie)
+- UC10: Neurolens zero-shot extraction
+- UC11: Incoming document classification
+- UC12: Signature detection
+- UC13: Document anonymization
+
+Each use case MUST be independently demonstrable without requiring others.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution supersedes all other practices in case of conflict.
+- Amendments require: a written rationale, a version bump per semver rules,
+  and an update to this document before the change is implemented.
+- All feature plans and specs MUST include a Constitution Check gate that
+  validates compliance with Principles I–V before implementation begins.
+- Principle I (Credentials) violations are blocking and non-negotiable.
+- Complexity deviating from Principle III MUST be justified in the
+  plan's Complexity Tracking table.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-04-08 | **Last Amended**: 2026-04-08
