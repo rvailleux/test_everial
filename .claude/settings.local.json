@@ -10,7 +10,8 @@
       "Bash(git commit:*)",
       "Bash(gh repo:*)",
       "Bash(specify --version)",
-      "Bash(specify:*)"
+      "Bash(specify:*)",
+      "Bash(git push:*)"
     ]
   }
 }
