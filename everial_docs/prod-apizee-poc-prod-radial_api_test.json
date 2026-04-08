@@ -1,0 +1,231 @@
+{
+  "info": {
+    "_postman_id": "",
+    "name": "prod-apizee-poc-prod-radial api test",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": ""
+  },
+  "item": [
+    {
+      "name": "authentification",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const jsonData = pm.response.json();",
+              "pm.collectionVariables.set(\"token\", jsonData.access_token);"
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "password",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "tools",
+              "type": "text"
+            },
+            {
+              "key": "scope",
+              "value": "openid",
+              "type": "text"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{password}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://auth.v2.wizidee.com/realms/quota/protocol/openid-connect/token",
+          "protocol": "https",
+          "host": [
+            "auth",
+            "v2",
+            "wizidee",
+            "com"
+          ],
+          "path": [
+            "realms",
+            "quota",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "recognize",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = JSON.parse(responseBody);",
+              "postman.setEnvironmentVariable(\"dbId\", jsonData.dbId);",
+              "postman.setEnvironmentVariable(\"radId\", jsonData.radId);"
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{url}}/api/v1/recognize",
+          "protocol": "https",
+          "host": [
+            "api",
+            "v2",
+            "wizidee",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "recognize"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "analyze",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "dbId",
+              "value": "{{dbId}}",
+              "type": "text"
+            },
+            {
+              "key": "radId",
+              "value": "{{radId}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{url}}/api/v1/analyze",
+          "protocol": "https",
+          "host": [
+            "api",
+            "v2",
+            "wizidee",
+            "com"
+          ],
+          "port": "",
+          "path": [
+            "api",
+            "v1",
+            "analyze"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "user",
+      "value": "prod-apizee-poc-prod-radial",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "0UOSWmS2Vx)a%Y0BTUxL",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "url",
+      "value": "https://api.v2.wizidee.com",
+      "type": "string"
+    }
+  ]
+}
