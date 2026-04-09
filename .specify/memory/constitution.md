@@ -1,20 +1,17 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: (template) → 1.0.0
-New principles: 5 (all new — first ratification from blank template)
-  I.   Credentials Never Exposed
-  II.  Proxy-First Architecture
-  III. Demonstrator Clarity
-  IV.  Test-First (TDD)
-  V.   Modern, Responsive UI
-Added sections: Technical Constraints, Use Case Scope
+Version change: 1.2.1 → 1.3.0
+Modified principles: 1 added
+  VIII. Kernel/Modules Architecture (NEW)
+Rationale: New architectural principle defining the video call as a kernel
+  and document processing features as plug-in modules. Formalizes the
+  kernel/modules design pattern for all WIZIDEE feature development.
+Added sections: none
 Removed sections: none
-Templates checked:
-  ✅ .specify/templates/plan-template.md — Constitution Check gates aligned
-  ✅ .specify/templates/spec-template.md — no mandatory sections conflict
-  ✅ .specify/templates/tasks-template.md — task types align with TDD principle
-  ✅ README.md — no outdated references
+Templates requiring updates:
+  ✅ .specify/templates/plan-template.md — added Principle VIII reference
+  ✅ CLAUDE.md — added Kernel/Modules Architecture section
 Deferred TODOs: none
 -->
 
@@ -35,9 +32,8 @@ accidental exposure would compromise the live WIZIDEE account.
 
 ### II. Proxy-First Architecture
 
-All calls to external APIs (WIZIDEE, ApiRTC) MUST route through Next.js API
-routes (`/api/*`). The frontend MUST NOT call `wizidee.com` or `apirtc.io`
-endpoints directly.
+All calls to external APIs (WIZIDEE) MUST route through Next.js API
+routes (`/api/*`). The frontend MUST NOT call `wizidee.com` endpoints directly.
 
 - Next.js route handles auth token lifecycle (acquire, cache, refresh)
 - Frontend sends documents to `/api/wizidee/*`, never to the upstream directly
@@ -87,12 +83,77 @@ Rationale: The app is shown to prospects and business stakeholders in the
 context of a video call. First impressions matter. A slow or broken UI
 undermines confidence in the WIZIDEE product itself.
 
+### VI. Video-First Integration
+
+All WIZIDEE document capture features MUST be built into the video call
+interface as synchronous, in-session workflows. Features MUST NOT be
+implemented as standalone async file upload pages separate from the video call.
+
+- Document capture happens during the active video session
+- Participants see each other while documents are being captured and processed
+- Results are displayed in real-time to both parties within the call interface
+- The video call is the container; document processing is the feature
+
+Rationale: The core value proposition is "document verification during a
+video call" — not "file upload with a separate video feature". Keeping
+everything in-session demonstrates the true WIZIDEE integration
+value: real-time identity verification with a human in the loop.
+
+### VII. Visual Verification via Chrome DevTools
+
+Every frontend feature MUST be verified with Chrome DevTools Protocol (CDP)
+before the task is considered complete. Visual verification via browser
+automation is not optional — it is a mandatory quality gate.
+
+- Each page and critical user flow MUST be tested using Chrome DevTools
+  Protocol (via Puppeteer, chrome-remote-interface, or similar CDP client)
+- Screenshots MUST be captured at multiple viewport sizes (desktop, tablet, mobile)
+- Console errors and network failures MUST be captured and reviewed
+- No task is complete without visual verification — screenshots and console
+  logs are the proof that the UI renders correctly in a real browser
+
+Rationale: Unit tests with Jest + jsdom cannot catch CSS regressions, layout
+shifts, or browser-specific rendering issues. Chrome DevTools Protocol provides
+direct access to the browser's internals for comprehensive verification.
+
+### VIII. Kernel/Modules Architecture
+
+The video call interface MUST be architected as a **kernel** with pluggable
+**modules**. All document processing features are modules that extend the
+kernel — never standalone pages or separate workflows.
+
+**Kernel Responsibilities (The Video Call Foundation):**
+- Video session management and peer connection (LiveKit)
+- Snapshot capture from the video stream (camera or screen share)
+- Module registry and lifecycle management
+- Shared UI chrome: menu system for module selection, configuration area,
+  action triggers, and results display area
+
+**Module Responsibilities (Feature Extensions):**
+- Each WIZIDEE use case (Identity, RIB, Proof of Address, etc.) is a module
+- Modules register themselves with the kernel via a consistent interface
+- Modules provide: configuration UI, processing logic (via WIZIDEE APIs),
+  and result rendering components
+- Modules MUST NOT implement their own video handling or snapshot capture
+
+**Integration Contract:**
+- User selects a module from the kernel's menu → module's config UI renders
+- User configures options → clicks "Capture" → kernel acquires snapshot
+- User clicks "Process" → module sends snapshot to WIZIDEE via kernel APIs
+- Results appear in the shared results area, visible to both call participants
+
+Rationale: This architecture enforces consistency across all use cases,
+eliminates duplication of video/snapshot logic, and makes adding new document
+types a matter of implementing the module interface. The kernel/modules
+pattern ensures that every feature naturally follows the Video-First principle
+by design — modules cannot exist outside the video call context.
+
 ## Technical Constraints
 
 - **Framework**: Next.js (App Router) with TypeScript
 - **Styling**: Tailwind CSS (or equivalent utility-first framework)
-- **Video**: ApiRTC SDK for in-session document capture flows
-- **Testing**: Jest + React Testing Library
+- **Video**: LiveKit SDK for in-session document capture flows
+- **Testing**: Jest + React Testing Library (unit), Chrome DevTools Protocol (visual/E2E)
 - **Git workflow**: Trunk-based development (commit to `main`, short-lived branches < 1 day)
 - **Language**: English for code, comments, and commit messages
 - **Credentials**: Stored in `.env.local` only — `.env.local` is gitignored
@@ -118,7 +179,7 @@ The following 13 use cases are in scope, implemented in priority order:
 - UC12: Signature detection
 - UC13: Document anonymization
 
-Each use case MUST be independently demonstrable without requiring others.
+Each use case MUST be implemented as a Kernel Module per Principle VIII.
 
 ## Governance
 
@@ -126,9 +187,11 @@ Each use case MUST be independently demonstrable without requiring others.
 - Amendments require: a written rationale, a version bump per semver rules,
   and an update to this document before the change is implemented.
 - All feature plans and specs MUST include a Constitution Check gate that
-  validates compliance with Principles I–V before implementation begins.
-- Principle I (Credentials) violations are blocking and non-negotiable.
+  validates compliance with Principles I–VIII before implementation begins.
+- Principle I (Credentials), Principle VI (Video-First), Principle VII
+  (Visual Verification), and Principle VIII (Kernel/Modules) violations
+  are blocking and non-negotiable.
 - Complexity deviating from Principle III MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-08 | **Last Amended**: 2026-04-08
+**Version**: 1.3.0 | **Ratified**: 2026-04-08 | **Last Amended**: 2026-04-09

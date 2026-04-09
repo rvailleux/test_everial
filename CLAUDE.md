@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A **demonstration web application** showcasing WIZIDEE document capture and recognition APIs (by EVERIAL) in the context of a video call session powered by **ApiRTC**.
+A **demonstration web application** showcasing WIZIDEE document capture and recognition APIs (by EVERIAL) in the context of a video call session.
 
 The goal is a readable, well-structured codebase that developers can use as a reference integration for WIZIDEE APIs. Prioritize clarity and simplicity over abstraction.
 
@@ -13,10 +13,57 @@ The goal is a readable, well-structured codebase that developers can use as a re
 - **Framework**: Next.js (App Router)
 - **Frontend**: React + TypeScript, modern UI (Tailwind CSS or equivalent)
 - **Backend**: Next.js API Routes acting as a secure proxy to WIZIDEE APIs
-- **Testing**: Jest + React Testing Library (TDD approach)
-- **Video**: ApiRTC SDK
+- **Testing**: Jest + React Testing Library (unit), Chrome DevTools Protocol (visual/E2E)
+- **Video**: LiveKit SDK
 
 All WIZIDEE API calls MUST go through the Next.js backend routes — never expose credentials to the browser.
+
+### Video-First Integration Principle
+
+All WIZIDEE document capture features MUST be built into the **video call interface as synchronous, in-session workflows**. Features MUST NOT be implemented as standalone async file upload pages separate from the video call.
+
+- Document capture happens during the active video session
+- Participants see each other while documents are being captured and processed
+- Results are displayed in real-time to both parties within the call interface
+- The video call is the container; document processing is the feature
+
+### Visual Verification Principle
+
+Every frontend feature MUST be verified with **Chrome DevTools Protocol (CDP)**
+before the task is considered complete. No task is done without visual proof.
+
+- Each page and critical user flow MUST be tested using Chrome DevTools
+  Protocol (via Puppeteer, chrome-remote-interface, or similar CDP client)
+- Screenshots MUST be captured at multiple viewport sizes (desktop, tablet, mobile)
+- Console errors and network failures MUST be captured and reviewed
+- Unit tests alone are insufficient — visual verification in a real browser
+  environment is mandatory
+
+### Kernel/Modules Architecture Principle
+
+The video call interface MUST be architected as a **kernel** with pluggable
+**modules**. All document processing features are modules that extend the
+kernel — never standalone pages or separate workflows.
+
+**Kernel Responsibilities (The Video Call Foundation):**
+- Video session management and peer connection (LiveKit)
+- Snapshot capture from the video stream (camera or screen share)
+- Module registry and lifecycle management
+- Shared UI chrome: menu system for module selection, configuration area,
+  action triggers, and results display area
+
+**Module Responsibilities (Feature Extensions):**
+- Each WIZIDEE use case (Identity, RIB, Proof of Address, etc.) is a module
+- Modules register themselves with the kernel via a consistent interface
+- Modules provide: configuration UI, processing logic (via WIZIDEE APIs),
+  and result rendering components
+- Modules MUST NOT implement their own video handling or snapshot capture
+
+**Integration Contract:**
+- User selects a module from the kernel's menu → module's config UI renders
+- User configures options → clicks "Capture" → kernel acquires snapshot
+- User clicks "Process" → module sends snapshot to WIZIDEE via kernel APIs
+- Results appear in the shared results area, visible to both call participants
 
 ---
 
@@ -82,26 +129,54 @@ Start with use cases 1–4 as the core MVP.
 
 ## Architecture
 
+### Kernel/Modules Structure
+
+The application follows a **kernel/modules architecture** where the video call
+provides the foundation (kernel) and each WIZIDEE use case is implemented as
+a pluggable module.
+
 ```
 app/
 ├── (frontend)
 │   ├── page.tsx                  # Landing / use case selector
-│   ├── session/[id]/page.tsx     # Video call session with document capture
-│   └── components/
-│       ├── DocumentCapture.tsx   # Upload or camera capture UI
-│       ├── ExtractionResult.tsx  # Display extracted fields
-│       └── VideoCall.tsx         # ApiRTC integration
+│   ├── session/[id]/             # Video call session (KERNEL)
+│   │   ├── page.tsx              # Kernel: video + module integration
+│   │   ├── components/
+│   │   │   ├── VideoCall.tsx     # LiveKit integration (kernel)
+│   │   │   ├── ModuleMenu.tsx    # Module selection menu
+│   │   │   ├── ConfigPanel.tsx   # Module configuration area
+│   │   │   ├── ActionBar.tsx     # Capture + Process buttons
+│   │   │   └── ResultsPanel.tsx  # Shared results display
+│   │   └── hooks/
+│   │       ├── useSnapshot.ts    # Video frame capture
+│   │       ├── useModule.ts      # Module registry access
+│   │       └── useWizideeAPI.ts  # Typed WIZIDEE client
+│   └──
+│
+├── modules/                      # MODULES (one per use case)
+│   ├── identity-cni/
+│   │   ├── index.ts              # Module descriptor + registration
+│   │   ├── ConfigComponent.tsx   # Document type selection
+│   │   ├── process.ts            # WIZIDEE API calls
+│   │   └── ResultComponent.tsx   # Identity card display
+│   ├── rib-extraction/
+│   ├── proof-address/
+│   ├── proof-income/
+│   └── [other modules...]
 │
 └── api/
     ├── wizidee/
     │   ├── recognize/route.ts    # Proxy → WIZIDEE /recognize
     │   ├── analyze/route.ts      # Proxy → WIZIDEE /analyze
     │   └── token/route.ts        # Internal token management
-    └── session/route.ts          # ApiRTC session management
+    └── session/route.ts          # LiveKit session management
 
 lib/
 ├── wizidee.ts                    # WIZIDEE API client (server-side only)
-└── apirtc.ts                     # ApiRTC helpers
+├── livekit.ts                    # LiveKit helpers
+└── modules/
+    ├── registry.ts               # Module registration system
+    └── types.ts                  # Module interface definitions
 ```
 
 ---
@@ -139,3 +214,12 @@ lib/
 - `everial_docs/WIZIDEE - Mémoire technico-fonctionnel.md` is the full product documentation — reference it for API behavior details
 - The WIZIDEE API returns `dbId` + `radId` from `/recognize` — these MUST be passed to `/analyze`
 - Token expiration is handled server-side; clients never see credentials
+
+## Active Technologies
+- TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, Tailwind CSS 4, Jest + React Testing Library (to be added) (001-uc1-identity-verification)
+- None — extraction results are session-only, held in React state (001-uc1-identity-verification)
+- TypeScript 5 / Node.js (Next.js 15 runtime) + Next.js 15 (App Router), React 19, `@livekit/components-react`, Tailwind CSS 4 (002-livekit-video-call)
+- N/A — all state is transient (React component state, cleared on call end) (002-apirtc-video-call)
+
+## Recent Changes
+- 001-uc1-identity-verification: Added TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, Tailwind CSS 4, Jest + React Testing Library (to be added)

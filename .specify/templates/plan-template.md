@@ -31,7 +31,16 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+| Principle | Status | Notes |
+|-----------|--------|-------|
+| I. Credentials Never Exposed | ⬜ TBD | |
+| II. Proxy-First Architecture | ⬜ TBD | |
+| III. Demonstrator Clarity | ⬜ TBD | |
+| IV. Test-First (TDD) | ⬜ TBD | |
+| V. Modern, Responsive UI | ⬜ TBD | |
+| VI. Video-First Integration | ⬜ TBD | Feature built into video call interface (in-session, not async file upload) |
+| VII. Visual Verification | ⬜ TBD | Chrome DevTools screenshots captured at multiple viewports before task complete |
+| VIII. Kernel/Modules Architecture | ⬜ TBD | Feature implemented as a module extending the video call kernel |
 
 ## Project Structure
 
