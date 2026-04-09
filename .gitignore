@@ -10,5 +10,17 @@ out/
 .env.local
 .env.*.local
 
+# build outputs
+dist/
+build/
+
+# logs
+*.log
+
 # misc
 .DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+certificates

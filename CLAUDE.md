@@ -181,6 +181,86 @@ lib/
 
 ---
 
+## Module Registry Usage
+
+The module registry system enables pluggable document processing features.
+
+### Creating a Module
+
+```typescript
+// src/modules/my-feature/index.ts
+import { WizideeModule, registerModule } from '@/lib/modules';
+import { ConfigComponent } from './ConfigComponent';
+import { ResultComponent } from './ResultComponent';
+
+export interface MyConfig {
+  enabled: boolean;
+  threshold: number;
+}
+
+export const myModule: WizideeModule<MyConfig> = {
+  id: 'my-feature',
+  name: 'My Feature',
+  description: 'Extracts data from documents',
+  ConfigComponent,
+  ResultComponent,
+  defaultConfig: { enabled: true, threshold: 0.5 },
+  process: async (snapshot: Blob, config: MyConfig) => {
+    // Process document via WIZIDEE API
+    return { success: true, data: { extracted: 'data' } };
+  },
+};
+
+// Register at app initialization
+registerModule(myModule);
+```
+
+### Using Modules in Components
+
+```tsx
+// In your video call page
+import { ModuleProvider } from '@/lib/context/ModuleProvider';
+import { ModuleMenu } from '@/components/ModuleMenu';
+import { ModuleConfigPanel } from '@/components/ModuleConfigPanel';
+
+export default function VideoCallPage() {
+  return (
+    <ModuleProvider>
+      <div className="grid grid-cols-3 gap-4">
+        <ModuleMenu />           {/* Lists all registered modules */}
+        <ModuleConfigPanel />     {/* Config + processing UI */}
+      </div>
+    </ModuleProvider>
+  );
+}
+```
+
+### Module Hooks
+
+```tsx
+// Access all modules
+const modules = useAllModules();
+
+// Access specific module
+const module = useModule('identity-cni');
+
+// Track active module
+const { activeModule, setActiveModule } = useActiveModule();
+
+// Manage module configuration
+const { config, setConfig, resetConfig } = useModuleConfig<MyConfig>();
+
+// Execute processing
+const { result, isProcessing, process } = useModuleProcess();
+await process(snapshotBlob);
+```
+
+### Test Page
+
+Visit `/test-module-registry` to manually verify the module registry system.
+
+---
+
 ## Development Guidelines
 
 ### Code Style
@@ -220,6 +300,8 @@ lib/
 - None — extraction results are session-only, held in React state (001-uc1-identity-verification)
 - TypeScript 5 / Node.js (Next.js 15 runtime) + Next.js 15 (App Router), React 19, `@livekit/components-react`, Tailwind CSS 4 (002-livekit-video-call)
 - N/A — all state is transient (React component state, cleared on call end) (002-apirtc-video-call)
+- TypeScript 5 / Node.js (Next.js runtime) + React 19, Next.js 16.2.2 (004-module-registry)
+- N/A (in-memory registry, no persistence) (004-module-registry)
 
 ## Recent Changes
 - 001-uc1-identity-verification: Added TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, Tailwind CSS 4, Jest + React Testing Library (to be added)

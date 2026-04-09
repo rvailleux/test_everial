@@ -11,7 +11,64 @@
       "Bash(gh repo:*)",
       "Bash(specify --version)",
       "Bash(specify:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(claude init:*)",
+      "Bash(python3 -c \"import docx\")",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 uninstall:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(wait)",
+      "Bash(cp:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(kill 376468)",
+      "Skill(update-config)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -qE '\\\\.\\(ts|tsx\\)$')",
+      "Bash(mkdir -p /home/user/.claude/skills/orchestrate /home/user/.claude/skills/speckit)",
+      "Bash(mv /home/user/.claude/skills/orchestrate.md /home/user/.claude/skills/orchestrate/SKILL.md)",
+      "Bash(mv /home/user/.claude/skills/speckit.md /home/user/.claude/skills/speckit/SKILL.md)",
+      "Bash(mkdir -p /home/user/workspace/test_everial/.claude/skills)",
+      "Bash(mv /home/user/.claude/skills/specflow /home/user/workspace/test_everial/.claude/skills/specflow)",
+      "Bash(lsof -ti:5172)",
+      "Bash(xargs kill:*)",
+      "Bash(fuser -k 5172/tcp)",
+      "Bash(kill -9 901441 901238)",
+      "Bash(git worktree:*)",
+      "Bash(rm -rf .claude/worktrees/soft-munching-dawn)",
+      "Bash(git reset:*)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', '') or d.get('tool_response', {}).get('filePath', '')\nif not f or not (f.endswith('.ts') or f.endswith('.tsx')):\n    sys.exit(0)\nresult = subprocess.run(['npx', 'tsc', '--noEmit'], capture_output=True, text=True, cwd='/home/user/workspace/test_everial')\noutput = (result.stdout + result.stderr).strip()\nif output:\n    print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': 'TypeScript check after edit:\\n' + output[:2000]}}))\n\"",
+            "timeout": 60,
+            "statusMessage": "Type-checking...",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "symlinkDirectories": [
+      "node_modules",
+      ".next"
+    ]
+  },
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
+    }
   }
 }
