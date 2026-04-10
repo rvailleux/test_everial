@@ -100,7 +100,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Module result overlay/panel renders next to snapshot on same page
   - State is React-only: snapshot + results reset on page refresh
 
-- [ ] **K4 — WIZIDEE Proxy Client**
+- [x] **K4 — WIZIDEE Proxy Client**
   branch: 006-wizidee-proxy-client
   files: src/app/api/wizidee/, lib/wizidee.ts, src/hooks/useWizideeAPI.ts
   done-when: npm test passes, npx tsc --noEmit clean
@@ -108,7 +108,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Handle token refresh transparently
   - Expose via hook `useWizideeAPI()` for modules
 
-- [ ] **K5 — Module Template/Scaffold**
+- [~] **K5 — Module Template/Scaffold**
   branch: feat/kernel-template
   files: templates/module/
   done-when: npx tsc --noEmit clean (template files compile)
