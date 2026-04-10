@@ -1,23 +1,98 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { ModuleProvider } from '@/lib/context/ModuleProvider';
+import { ModuleSelector } from '@/components/ModuleSelector';
+import { ModuleConfigPanel } from '@/components/ModuleConfigPanel';
+import { ActionBar } from '@/components/ActionBar';
+import { useActiveModule } from '@/lib/hooks/useActiveModule';
+import { useModuleProcess } from '@/lib/hooks/useModuleProcess';
 
-// Dynamically import LiveKitVideoCall with SSR disabled to prevent
-// LiveKit SDK from accessing window during server-side rendering
+// Dynamically import LiveKitVideoCall with SSR disabled
 const LiveKitVideoCall = dynamic(() => import('@/components/LiveKitVideoCall'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-zinc-200 shadow-sm">
+    <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-zinc-200 shadow-sm min-h-[400px]">
       <div className="text-zinc-600">Loading video call...</div>
     </div>
   ),
 });
 
-export default function VideoCallPage() {
+/**
+ * Inner content of the kernel page.
+ * Separated to use hooks within ModuleProvider context.
+ */
+function VideoCallKernel() {
   const [roomName, setRoomName] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
+  const [snapshot, setSnapshot] = useState<Blob | null>(null);
+  const [snapshotUrl, setSnapshotUrl] = useState<string | null>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
+  const { activeModule } = useActiveModule();
+  const { result, isProcessing, error, process, clearResult } = useModuleProcess();
+
+  /**
+   * Capture a snapshot from the local video stream
+   */
+  const handleCapture = useCallback(() => {
+    if (!videoContainerRef.current) return;
+
+    // Find the local video element within the LiveKit component
+    const videoElement = videoContainerRef.current.querySelector('video');
+    if (!videoElement) {
+      console.error('Video element not found');
+      return;
+    }
+
+    try {
+      // Create canvas with video dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = videoElement.videoWidth || 640;
+      canvas.height = videoElement.videoHeight || 480;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('Could not create canvas context');
+        return;
+      }
+
+      // Draw video frame to canvas
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+      // Convert to blob and update state
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            // Clean up previous snapshot URL
+            if (snapshotUrl) {
+              URL.revokeObjectURL(snapshotUrl);
+            }
+            setSnapshot(blob);
+            setSnapshotUrl(URL.createObjectURL(blob));
+            clearResult();
+          }
+        },
+        'image/png',
+        0.95
+      );
+    } catch (err) {
+      console.error('Failed to capture snapshot:', err);
+    }
+  }, [snapshotUrl, clearResult]);
+
+  /**
+   * Process the captured snapshot with the active module
+   */
+  const handleProcess = useCallback(async () => {
+    if (!snapshot || !activeModule) return;
+    await process(snapshot);
+  }, [snapshot, activeModule, process]);
+
+  /**
+   * Handle room join
+   */
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (roomName.trim()) {
@@ -25,18 +100,19 @@ export default function VideoCallPage() {
     }
   };
 
-  return (
-    <main className="min-h-screen bg-zinc-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900">Video Call</h1>
-          <p className="text-zinc-600 mt-2">
-            Connect with others using LiveKit powered video calls.
-          </p>
-        </header>
+  // Pre-join state
+  if (!hasJoined) {
+    return (
+      <main className="min-h-screen bg-zinc-50 p-4 md:p-8">
+        <div className="max-w-md mx-auto">
+          <header className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-zinc-900">Video Call</h1>
+            <p className="text-zinc-600 mt-2">
+              Connect with others and process documents with WIZIDEE
+            </p>
+          </header>
 
-        {!hasJoined ? (
-          <div className="max-w-md mx-auto bg-white rounded-xl border border-zinc-200 shadow-sm p-8">
+          <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-8">
             <h2 className="text-xl font-semibold text-zinc-900 mb-4">
               Enter a Room
             </h2>
@@ -66,10 +142,105 @@ export default function VideoCallPage() {
               </button>
             </form>
           </div>
-        ) : (
-          <LiveKitVideoCall roomName={roomName} />
-        )}
+        </div>
+      </main>
+    );
+  }
+
+  // Main kernel UI
+  return (
+    <main className="min-h-screen bg-zinc-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-zinc-900">WIZIDEE Video Call</h1>
+              <p className="text-zinc-600 mt-1">
+                Room: <span className="font-medium text-zinc-900">{roomName}</span>
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setHasJoined(false);
+                setRoomName('');
+                if (snapshotUrl) {
+                  URL.revokeObjectURL(snapshotUrl);
+                }
+                setSnapshot(null);
+                setSnapshotUrl(null);
+                clearResult();
+              }}
+              className="px-4 py-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+            >
+              Leave Room
+            </button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left column: Video and snapshot */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Video container */}
+            <div ref={videoContainerRef} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+              <LiveKitVideoCall roomName={roomName} />
+            </div>
+
+            {/* Action bar */}
+            <ActionBar
+              onCapture={handleCapture}
+              onProcess={handleProcess}
+              canProcess={!!snapshot && !!activeModule && !isProcessing}
+              isProcessing={isProcessing}
+              canCapture={hasJoined}
+            />
+
+            {/* Snapshot preview */}
+            {snapshotUrl && (
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4">
+                <h3 className="text-sm font-medium text-zinc-700 mb-3">Captured Snapshot</h3>
+                <img
+                  src={snapshotUrl}
+                  alt="Captured document"
+                  className="max-w-full h-auto rounded-lg border border-zinc-200"
+                />
+              </div>
+            )}
+
+            {/* Processing error */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
+            {/* Results */}
+            {result && activeModule && (
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4">
+                <h3 className="text-sm font-medium text-zinc-700 mb-3">Processing Results</h3>
+                <activeModule.ResultComponent result={result} />
+              </div>
+            )}
+          </div>
+
+          {/* Right column: Module selector and config */}
+          <div className="space-y-4">
+            <ModuleSelector />
+            <ModuleConfigPanel />
+          </div>
+        </div>
       </div>
     </main>
+  );
+}
+
+/**
+ * Main video call page - the KERNEL
+ * Wraps the kernel content in ModuleProvider for module registry access
+ */
+export default function VideoCallPage() {
+  return (
+    <ModuleProvider>
+      <VideoCallKernel />
+    </ModuleProvider>
   );
 }
