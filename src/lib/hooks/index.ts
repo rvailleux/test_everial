@@ -1,0 +1,10 @@
+/**
+ * Hooks - Public API
+ *
+ * Export all custom hooks.
+ */
+
+export { useModule } from './useModule';
+export { useActiveModule } from './useActiveModule';
+export { useModuleConfig } from './useModuleConfig';
+export { useAllModules } from './useAllModules';
