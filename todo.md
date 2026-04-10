@@ -91,7 +91,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Action bar: Capture button (kernel) + Process button (triggers module.process)
   - Redirect `/` to `/video-call` or show minimal landing
 
-- [~] **K3 — Snapshot Capture + Results Display**
+- [x] **K3 — Snapshot Capture + Results Display**
   branch: feat/kernel-snapshot-display
   files: src/components/SnapshotCapture.tsx, src/components/SnapshotDisplay.tsx, src/hooks/useSnapshot.ts
   done-when: npm test passes, npx tsc --noEmit clean

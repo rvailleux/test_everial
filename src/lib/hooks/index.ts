@@ -9,3 +9,4 @@ export { useActiveModule } from './useActiveModule';
 export { useModuleConfig } from './useModuleConfig';
 export { useAllModules } from './useAllModules';
 export { useSnapshot } from './useSnapshot';
+export { useWizideeAPI } from './useWizideeAPI';
