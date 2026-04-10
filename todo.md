@@ -108,7 +108,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Handle token refresh transparently
   - Expose via hook `useWizideeAPI()` for modules
 
-- [~] **K5 — Module Template/Scaffold**
+- [x] **K5 — Module Template/Scaffold**
   branch: feat/kernel-template
   files: templates/module/
   done-when: npx tsc --noEmit clean (template files compile)
@@ -120,7 +120,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
 
 ## Data Extraction Modules
 
-- [ ] **UC1 — Identity Verification Module (`identity-cni`)**
+- [~] **UC1 — Identity Verification Module (`identity-cni`)
   branch: feat/module-identity-cni
   files: src/modules/identity-cni/
   done-when: npm test passes, npx tsc --noEmit clean
@@ -300,10 +300,41 @@ confirms the page renders as the kernel shell, no `session/[id]/` routes remain.
 
 ## Run Summary — 2026-04-10
 
-- Done: K1 (Module Registry System) — 005-module-registry branch merged
+### Completed
+
+- **K1** (Module Registry System) — already merged
   - 98 tests passing
-  - TypeScript clean (no new errors from K1)
-  - Added @lib path alias for lib/ directory imports
+  - TypeScript clean
   - Implemented: registry.ts, types.ts, ModuleProvider, useModule, useActiveModule, useModuleConfig, useAllModules
 
-- Pending: K2, K3, K4, K5 and UC1-UC13 modules
+- **K2** (`/video-call` Page + Kernel Shell) — feat/kernel-video-call-page
+  - 118 tests passing (+20 new tests)
+  - TypeScript clean for new files
+  - Created: video-call/page.tsx, VideoCall.tsx, ModuleSelector.tsx, ActionBar.tsx
+  - Redirect / to /video-call
+  - CDP screenshots captured for desktop/tablet/mobile
+
+- **K3** (Snapshot Capture + Results Display) — feat/kernel-snapshot-display
+  - 142 tests passing (+24 new tests)
+  - TypeScript clean for new files
+  - Created: SnapshotCapture.tsx, SnapshotDisplay.tsx, useSnapshot.ts
+  - Integrated into /video-call page
+  - CDP visual tests for snapshot capture
+
+- **K4** (WIZIDEE Proxy Client) — 006-wizidee-proxy-client + useWizideeAPI hook
+  - 148 tests passing (+6 new tests)
+  - TypeScript clean
+  - Created: useWizideeAPI.ts hook with recognize/analyze functions
+  - Server-side API routes already existed
+
+- **K5** (Module Template/Scaffold) — feat/kernel-template
+  - Template files compile without errors
+  - Created: templates/module/ with index.ts, ConfigComponent.tsx, ResultComponent.tsx, process.ts, README.md
+
+### Final State
+- Test Suites: 27 passed, 27 total
+- Tests: 148 passed, 148 total
+- Pre-existing TypeScript errors: LiveKit components (4), CDP tests (8) — unrelated to kernel work
+
+### Next Steps
+- UC1-UC13 modules can now be implemented using the K5 template
