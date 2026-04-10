@@ -80,7 +80,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Implement `ModuleProvider` context for dependency injection
   - Create hook `useModule(id: string)` for module access
 
-- [~] **K2 — Shared UI Areas**
+- [ ] **K2 — Shared UI Areas**
   branch: feat/kernel-ui
   files: src/components/ModuleMenu.tsx, src/components/ConfigPanel.tsx, src/components/ActionBar.tsx, src/components/ResultsPanel.tsx
   done-when: npm test passes, npx tsc --noEmit clean
@@ -89,7 +89,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **Action Area**: Capture button (kernel) + Process button (triggers module.process)
   - **Results Area**: Displays active results from any module, visible to both participants
 
-- [~] **K3 — Snapshot Capture System**
+- [ ] **K3 — Snapshot Capture System**
   branch: feat/kernel-snapshot
   files: src/hooks/useSnapshot.ts, src/components/SnapshotPreview.tsx
   done-when: npm test passes, npx tsc --noEmit clean
@@ -97,7 +97,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Preview snapshot before processing
   - Store snapshot temporarily (session-only, not persisted)
 
-- [~] **K4 — WIZIDEE Proxy Client**
+- [ ] **K4 — WIZIDEE Proxy Client**
   branch: feat/wizidee-proxy
   files: src/app/api/wizidee/, lib/wizidee.ts, src/hooks/useWizideeAPI.ts
   done-when: npm test passes, npx tsc --noEmit clean
@@ -259,3 +259,15 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **Config options**: Fields to redact (auto-suggested from recognition), anonymization level
   - **WIZIDEE flow**: `/recognize` → `/analyze` → `/anonymize` (or consolidate)
   - **Result view**: Side-by-side original/redacted preview + download link + raw metadata
+
+---
+
+## Run Summary — 2026-04-10
+
+- Done: K1 (Module Registry System) — 005-module-registry branch merged
+  - 98 tests passing
+  - TypeScript clean (no new errors from K1)
+  - Added @lib path alias for lib/ directory imports
+  - Implemented: registry.ts, types.ts, ModuleProvider, useModule, useActiveModule, useModuleConfig, useAllModules
+
+- Pending: K2, K3, K4, K5 and UC1-UC13 modules
