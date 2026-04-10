@@ -141,7 +141,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **WIZIDEE flow**: `/recognize` → `/analyze` (dbtype: identity)
   - **Result view**: ID card display with photo placeholder + raw JSON
 
-- [~] **UC2 — Proof of Address Module (`proof-address`)**
+- [x] **UC2 — Proof of Address Module (`proof-address`)**
   branch: feat/module-proof-address
   files: src/modules/proof-address/
   done-when: npm test passes, npx tsc --noEmit clean
@@ -152,7 +152,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **WIZIDEE flow**: `/recognize` → `/analyze` (dbtype: address_proof)
   - **Result view**: Address block formatted + map link + raw JSON
 
-- [ ] **UC3 — Proof of Income Module (`proof-income`)**
+- [~] **UC3 — Proof of Income Module (`proof-income`)**
   branch: feat/module-proof-income
   files: src/modules/proof-income/
   done-when: npm test passes, npx tsc --noEmit clean
