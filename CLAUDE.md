@@ -302,6 +302,8 @@ Visit `/test-module-registry` to manually verify the module registry system.
 - N/A — all state is transient (React component state, cleared on call end) (002-apirtc-video-call)
 - TypeScript 5 / Node.js (Next.js runtime) + React 19, Next.js 16.2.2 (004-module-registry)
 - N/A (in-memory registry, no persistence) (004-module-registry)
+- TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, React Testing Library, Jest (006-wizidee-proxy-client)
+- In-memory token cache (no persistent storage per Constitution) (006-wizidee-proxy-client)
 
 ## Recent Changes
 - 001-uc1-identity-verification: Added TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, Tailwind CSS 4, Jest + React Testing Library (to be added)

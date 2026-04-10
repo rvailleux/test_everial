@@ -27,8 +27,8 @@ export interface WizideeResult {
 export interface ConfigProps<T = Record<string, any>> {
   /** Current configuration values */
   config: T;
-  /** Called when configuration changes */
-  onConfigChange: (config: T) => void;
+  /** Called when configuration changes - partial updates supported */
+  onConfigChange: (config: Partial<T>) => void;
 }
 
 /**

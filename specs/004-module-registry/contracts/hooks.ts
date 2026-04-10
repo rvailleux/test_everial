@@ -47,4 +47,4 @@ export interface ModuleProviderProps {
 /**
  * Provider component that makes module registry available to child components
  */
-export declare function ModuleProvider(props: ModuleProviderProps): JSX.Element;
+export declare function ModuleProvider(props: ModuleProviderProps): React.ReactElement;

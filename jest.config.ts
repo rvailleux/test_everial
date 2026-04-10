@@ -3,6 +3,7 @@ import path from 'path';
 
 const pathAliases = {
   '^@/(.*)$': path.resolve(__dirname, 'src/$1'),
+  '^@lib/(.*)$': path.resolve(__dirname, 'lib/$1'),
 };
 
 const config: Config = {
@@ -10,6 +11,7 @@ const config: Config = {
     {
       displayName: 'api',
       testEnvironment: 'node',
+      testPathIgnorePatterns: ['<rootDir>/.claude/'],
       testMatch: ['**/tests/api/**/*.test.ts'],
       transform: {
         '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
@@ -20,6 +22,7 @@ const config: Config = {
     {
       displayName: 'modules',
       testEnvironment: 'node',
+      testPathIgnorePatterns: ['<rootDir>/.claude/'],
       testMatch: ['**/tests/modules/**/*.test.ts'],
       transform: {
         '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
@@ -30,7 +33,19 @@ const config: Config = {
     {
       displayName: 'hooks',
       testEnvironment: 'jsdom',
-      testMatch: ['**/tests/hooks/**/*.test.tsx'],
+      testPathIgnorePatterns: ['<rootDir>/.claude/'],
+      testMatch: ['**/tests/hooks/**/*.test.{ts,tsx}'],
+      transform: {
+        '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
+      },
+      moduleNameMapper: pathAliases,
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+    },
+    {
+      displayName: 'context',
+      testEnvironment: 'jsdom',
+      testPathIgnorePatterns: ['<rootDir>/.claude/'],
+      testMatch: ['**/tests/context/**/*.test.tsx'],
       transform: {
         '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
       },
@@ -40,6 +55,7 @@ const config: Config = {
     {
       displayName: 'components',
       testEnvironment: 'jsdom',
+      testPathIgnorePatterns: ['<rootDir>/.claude/'],
       testMatch: ['**/tests/components/**/*.test.tsx'],
       transform: {
         '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],

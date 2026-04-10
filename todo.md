@@ -72,15 +72,15 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
 
 ## Kernel Tasks
 
-- [ ] **K1 — Module Registry System**
-  branch: feat/kernel-registry
+- [x] **K1 — Module Registry System**
+  branch: 005-module-registry
   files: lib/modules/registry.ts, lib/modules/types.ts, src/lib/context/
   done-when: npm test passes, npx tsc --noEmit clean
   - Create `lib/modules/registry.ts` with module registration/discovery
   - Implement `ModuleProvider` context for dependency injection
   - Create hook `useModule(id: string)` for module access
 
-- [ ] **K2 — Shared UI Areas**
+- [~] **K2 — Shared UI Areas**
   branch: feat/kernel-ui
   files: src/components/ModuleMenu.tsx, src/components/ConfigPanel.tsx, src/components/ActionBar.tsx, src/components/ResultsPanel.tsx
   done-when: npm test passes, npx tsc --noEmit clean
@@ -89,7 +89,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **Action Area**: Capture button (kernel) + Process button (triggers module.process)
   - **Results Area**: Displays active results from any module, visible to both participants
 
-- [ ] **K3 — Snapshot Capture System**
+- [~] **K3 — Snapshot Capture System**
   branch: feat/kernel-snapshot
   files: src/hooks/useSnapshot.ts, src/components/SnapshotPreview.tsx
   done-when: npm test passes, npx tsc --noEmit clean
@@ -97,7 +97,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Preview snapshot before processing
   - Store snapshot temporarily (session-only, not persisted)
 
-- [ ] **K4 — WIZIDEE Proxy Client**
+- [~] **K4 — WIZIDEE Proxy Client**
   branch: feat/wizidee-proxy
   files: src/app/api/wizidee/, lib/wizidee.ts, src/hooks/useWizideeAPI.ts
   done-when: npm test passes, npx tsc --noEmit clean

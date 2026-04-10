@@ -9,11 +9,7 @@ import { ConfigComponent, MODULE_IDConfig } from './ConfigComponent';
 import { ResultComponent } from './ResultComponent';
 import { processDocument } from './process';
 
-export interface MODULE_IDConfig {
-  enabled: boolean;
-  threshold: number;
-  // Add your configuration fields here
-}
+export type { MODULE_IDConfig };
 
 export const MODULE_IDModule: WizideeModule<MODULE_IDConfig> = {
   id: 'MODULE_ID',

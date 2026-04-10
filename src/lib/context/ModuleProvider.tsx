@@ -59,7 +59,7 @@ export function ModuleProvider({ children, initialModules = [] }: ModuleProvider
     if (module) {
       setConfigStates((prev) => {
         const next = new Map(prev);
-        next.set(id, module.defaultConfig);
+        next.set(id, module.defaultConfig as Record<string, any>);
         return next;
       });
     }

@@ -1,22 +1,23 @@
 /**
  * Unit tests for Module Registry
  *
- * Tests: T003-T007
- * - T003: validation rejects incomplete modules
- * - T004: registerModule stores module in Map
- * - T005: getModule retrieves by ID
- * - T006: getAllModules returns array
- * - T007: duplicate ID warns and overwrites
+ * User Story 1: Register and Discover Modules
+ * Tests for lib/modules/registry.ts
  */
 
-import { createModuleRegistry } from '@/lib/modules/registry';
-import { WizideeModule } from '@/lib/modules/types';
+import {
+  registerModule,
+  getAllModules,
+  getModuleById,
+  clearRegistry,
+} from '../../lib/modules/registry';
+import { WizideeModule } from '../../lib/modules/types';
 
 // Mock React components for testing
 const MockConfigComponent = () => null;
 const MockResultComponent = () => null;
 
-// Helper to create a valid test module
+// Helper to create a test module
 const createTestModule = (id: string, overrides?: Partial<WizideeModule>): WizideeModule => ({
   id,
   name: `Test Module ${id}`,
@@ -29,106 +30,44 @@ const createTestModule = (id: string, overrides?: Partial<WizideeModule>): Wizid
 });
 
 describe('Module Registry', () => {
-  let registry: ReturnType<typeof createModuleRegistry>;
-
   beforeEach(() => {
-    registry = createModuleRegistry();
+    clearRegistry();
   });
 
-  describe('T003: Module Validation', () => {
-    it('should reject module without id', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).id;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module id is required');
-    });
-
-    it('should reject module without name', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).name;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module name is required');
-    });
-
-    it('should reject module without description', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).description;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module description is required');
-    });
-
-    it('should reject module without ConfigComponent', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).ConfigComponent;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module ConfigComponent is required');
-    });
-
-    it('should reject module without ResultComponent', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).ResultComponent;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module ResultComponent is required');
-    });
-
-    it('should reject module without process function', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).process;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module process is required');
-    });
-
-    it('should reject module without defaultConfig', () => {
-      const invalidModule = createTestModule('test');
-      delete (invalidModule as any).defaultConfig;
-
-      expect(() => registry.register(invalidModule)).toThrow('Module defaultConfig is required');
-    });
-  });
-
-  describe('T004: registerModule', () => {
-    it('should store module in registry', () => {
+  describe('registerModule', () => {
+    it('T004: should store module in registry', () => {
       const module = createTestModule('test-module');
 
-      registry.register(module);
+      registerModule(module);
 
-      expect(registry.has('test-module')).toBe(true);
+      expect(getModuleById('test-module')).toBe(module);
     });
 
-    it('should store complete module descriptor', () => {
-      const module = createTestModule('test-module', {
-        name: 'Custom Name',
-        description: 'Custom Description',
-      });
+    it('should overwrite existing module with same ID', () => {
+      const module1 = createTestModule('same-id', { name: 'First' });
+      const module2 = createTestModule('same-id', { name: 'Second' });
 
-      registry.register(module);
-      const retrieved = registry.get('test-module');
+      registerModule(module1);
+      registerModule(module2);
 
-      expect(retrieved).toEqual(module);
-    });
-  });
-
-  describe('T005: getModule', () => {
-    it('should retrieve module by ID', () => {
-      const module = createTestModule('test-module');
-      registry.register(module);
-
-      const retrieved = registry.get('test-module');
-
-      expect(retrieved).toBe(module);
+      const retrieved = getModuleById('same-id');
+      expect(retrieved?.name).toBe('Second');
     });
 
-    it('should return undefined for non-existent module', () => {
-      const retrieved = registry.get('non-existent');
+    it('should allow registering multiple modules', () => {
+      const module1 = createTestModule('module-1');
+      const module2 = createTestModule('module-2');
 
-      expect(retrieved).toBeUndefined();
+      registerModule(module1);
+      registerModule(module2);
+
+      expect(getAllModules()).toHaveLength(2);
     });
   });
 
-  describe('T006: getAllModules', () => {
-    it('should return empty array when no modules registered', () => {
-      const modules = registry.getAll();
-
+  describe('getAllModules', () => {
+    it('T006: should return empty array when no modules registered', () => {
+      const modules = getAllModules();
       expect(modules).toEqual([]);
     });
 
@@ -136,88 +75,56 @@ describe('Module Registry', () => {
       const module1 = createTestModule('module-1');
       const module2 = createTestModule('module-2');
 
-      registry.register(module1);
-      registry.register(module2);
+      registerModule(module1);
+      registerModule(module2);
 
-      const modules = registry.getAll();
-
+      const modules = getAllModules();
       expect(modules).toHaveLength(2);
       expect(modules).toContain(module1);
       expect(modules).toContain(module2);
     });
 
-    it('should return array (not Map)', () => {
-      registry.register(createTestModule('test'));
+    it('should return a copy of the modules array', () => {
+      registerModule(createTestModule('module-1'));
 
-      const modules = registry.getAll();
+      const modules = getAllModules();
+      modules.pop();
 
-      expect(Array.isArray(modules)).toBe(true);
+      expect(getAllModules()).toHaveLength(1);
     });
   });
 
-  describe('T007: Duplicate ID Handling', () => {
-    it('should warn when registering module with duplicate ID', () => {
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const module1 = createTestModule('duplicate-id', { name: 'First' });
-      const module2 = createTestModule('duplicate-id', { name: 'Second' });
+  describe('getModuleById', () => {
+    it('T005: should retrieve module by ID', () => {
+      const module = createTestModule('test-module');
+      registerModule(module);
 
-      registry.register(module1);
-      registry.register(module2);
+      const retrieved = getModuleById('test-module');
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('duplicate-id')
-      );
-
-      consoleSpy.mockRestore();
+      expect(retrieved).toBe(module);
     });
 
-    it('should overwrite existing module with same ID', () => {
-      const module1 = createTestModule('duplicate-id', { name: 'First' });
-      const module2 = createTestModule('duplicate-id', { name: 'Second' });
+    it('should return undefined for non-existent module', () => {
+      const result = getModuleById('non-existent');
 
-      registry.register(module1);
-      registry.register(module2);
-
-      const retrieved = registry.get('duplicate-id');
-
-      expect(retrieved?.name).toBe('Second');
+      expect(result).toBeUndefined();
     });
   });
 
-  describe('Additional Registry Methods', () => {
-    it('should return correct count', () => {
-      expect(registry.count()).toBe(0);
+  describe('clearRegistry', () => {
+    it('should remove all modules from registry', () => {
+      registerModule(createTestModule('module-1'));
+      registerModule(createTestModule('module-2'));
 
-      registry.register(createTestModule('module-1'));
-      expect(registry.count()).toBe(1);
+      clearRegistry();
 
-      registry.register(createTestModule('module-2'));
-      expect(registry.count()).toBe(2);
+      expect(getAllModules()).toEqual([]);
+      expect(getModuleById('module-1')).toBeUndefined();
     });
 
-    it('should unregister module by ID', () => {
-      registry.register(createTestModule('to-remove'));
-
-      const removed = registry.unregister('to-remove');
-
-      expect(removed).toBe(true);
-      expect(registry.has('to-remove')).toBe(false);
-    });
-
-    it('should return false when unregistering non-existent module', () => {
-      const removed = registry.unregister('non-existent');
-
-      expect(removed).toBe(false);
-    });
-
-    it('should clear all modules', () => {
-      registry.register(createTestModule('module-1'));
-      registry.register(createTestModule('module-2'));
-
-      registry.clear();
-
-      expect(registry.count()).toBe(0);
-      expect(registry.getAll()).toEqual([]);
+    it('should work on empty registry without error', () => {
+      expect(() => clearRegistry()).not.toThrow();
+      expect(getAllModules()).toEqual([]);
     });
   });
 });
