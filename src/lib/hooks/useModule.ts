@@ -15,5 +15,6 @@ import { useModuleContext } from '@/lib/context/ModuleProvider';
  */
 export function useModule(id: string) {
   const { modules } = useModuleContext();
-  return modules.find((module) => module.id === id) ?? null;
+  if (!id) return null;
+  return modules.find((module) => module.id === id);
 }

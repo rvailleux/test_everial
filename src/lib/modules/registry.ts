@@ -146,6 +146,12 @@ export const registerModule = globalRegistry.register;
 export const getModule = globalRegistry.get;
 
 /**
+ * Convenience function to get a module by ID from the singleton registry
+ * Alias for getModule for more explicit naming
+ */
+export const getModuleById = globalRegistry.get;
+
+/**
  * Convenience function to get all modules from the singleton registry
  */
 export const getAllModules = globalRegistry.getAll;

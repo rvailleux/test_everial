@@ -6,6 +6,8 @@ import { ModuleProvider } from '@/lib/context/ModuleProvider';
 import { ModuleSelector } from '@/components/ModuleSelector';
 import { ModuleConfigPanel } from '@/components/ModuleConfigPanel';
 import { ActionBar } from '@/components/ActionBar';
+import { SnapshotCapture } from '@/components/SnapshotCapture';
+import { SnapshotDisplay } from '@/components/SnapshotDisplay';
 import { useActiveModule } from '@/lib/hooks/useActiveModule';
 import { useModuleProcess } from '@/lib/hooks/useModuleProcess';
 
@@ -28,6 +30,7 @@ function VideoCallKernel() {
   const [hasJoined, setHasJoined] = useState(false);
   const [snapshot, setSnapshot] = useState<Blob | null>(null);
   const [snapshotUrl, setSnapshotUrl] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
 
   const { activeModule } = useActiveModule();
@@ -46,6 +49,14 @@ function VideoCallKernel() {
       return;
     }
 
+    // Check if video is ready
+    if (videoElement.readyState < 2) {
+      console.error('Video not ready');
+      return;
+    }
+
+    setIsCapturing(true);
+
     try {
       // Create canvas with video dimensions
       const canvas = document.createElement('canvas');
@@ -55,6 +66,7 @@ function VideoCallKernel() {
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Could not create canvas context');
+        setIsCapturing(false);
         return;
       }
 
@@ -73,12 +85,14 @@ function VideoCallKernel() {
             setSnapshotUrl(URL.createObjectURL(blob));
             clearResult();
           }
+          setIsCapturing(false);
         },
         'image/png',
         0.95
       );
     } catch (err) {
       console.error('Failed to capture snapshot:', err);
+      setIsCapturing(false);
     }
   }, [snapshotUrl, clearResult]);
 
@@ -194,31 +208,14 @@ function VideoCallKernel() {
               canCapture={hasJoined}
             />
 
-            {/* Snapshot preview */}
+            {/* Snapshot and Results Display */}
             {snapshotUrl && (
-              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4">
-                <h3 className="text-sm font-medium text-zinc-700 mb-3">Captured Snapshot</h3>
-                <img
-                  src={snapshotUrl}
-                  alt="Captured document"
-                  className="max-w-full h-auto rounded-lg border border-zinc-200"
-                />
-              </div>
-            )}
-
-            {/* Processing error */}
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                <strong>Error:</strong> {error}
-              </div>
-            )}
-
-            {/* Results */}
-            {result && activeModule && (
-              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4">
-                <h3 className="text-sm font-medium text-zinc-700 mb-3">Processing Results</h3>
-                <activeModule.ResultComponent result={result} />
-              </div>
+              <SnapshotDisplay
+                snapshotUrl={snapshotUrl}
+                result={result}
+                error={error}
+                ResultComponent={activeModule?.ResultComponent}
+              />
             )}
           </div>
 

@@ -7,8 +7,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { WizideeModule, ModuleContextValue } from '@/lib/modules/types';
-import { registry } from '@/lib/modules/registry';
+import { WizideeModule, ModuleContextValue } from '@lib/modules/types';
+import { registry } from '@lib/modules/registry';
 
 const ModuleContext = createContext<ModuleContextValue | null>(null);
 

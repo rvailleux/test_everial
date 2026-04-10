@@ -81,7 +81,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Implement `ModuleProvider` context for dependency injection
   - Create hook `useModule(id: string)` for module access
 
-- [ ] **K2 — `/video-call` Page + Kernel Shell**
+- [x] **K2 — `/video-call` Page + Kernel Shell**
   branch: feat/kernel-video-call-page
   files: src/app/video-call/page.tsx, src/components/VideoCall.tsx, src/components/ModuleSelector.tsx, src/components/ModuleConfigPanel.tsx, src/components/ActionBar.tsx
   done-when: npm test passes, npx tsc --noEmit clean, CDP screenshot shows /video-call renders
@@ -91,7 +91,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Action bar: Capture button (kernel) + Process button (triggers module.process)
   - Redirect `/` to `/video-call` or show minimal landing
 
-- [ ] **K3 — Snapshot Capture + Results Display**
+- [~] **K3 — Snapshot Capture + Results Display**
   branch: feat/kernel-snapshot-display
   files: src/components/SnapshotCapture.tsx, src/components/SnapshotDisplay.tsx, src/hooks/useSnapshot.ts
   done-when: npm test passes, npx tsc --noEmit clean
