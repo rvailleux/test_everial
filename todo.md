@@ -108,6 +108,16 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Handle token refresh transparently
   - Expose via hook `useWizideeAPI()` for modules
 
+- [ ] **K6 — Camera Switch Button**
+  branch: feat/kernel-camera-switch
+  files: src/components/VideoCall.tsx (or CameraSwitchButton.tsx)
+  done-when: npm test passes, npx tsc --noEmit clean, CDP screenshot confirms button appears only when ≥2 cameras available
+  - Add a small icon button (e.g. flip/switch camera icon) overlaid on the local video stream
+  - Enumerate available video input devices via `navigator.mediaDevices.enumerateDevices()`
+  - Button is visible only when multiple cameras are detected
+  - On click, cycle to the next available camera and replace the local LiveKit track
+  - Kernel feature — lives in the video stream UI, not inside any module
+
 - [x] **K5 — Module Template/Scaffold**
   branch: feat/kernel-template
   files: templates/module/
@@ -120,7 +130,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
 
 ## Data Extraction Modules
 
-- [~] **UC1 — Identity Verification Module (`identity-cni`)
+- [x] **UC1 — Identity Verification Module (`identity-cni`)
   branch: feat/module-identity-cni
   files: src/modules/identity-cni/
   done-when: npm test passes, npx tsc --noEmit clean
@@ -131,7 +141,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **WIZIDEE flow**: `/recognize` → `/analyze` (dbtype: identity)
   - **Result view**: ID card display with photo placeholder + raw JSON
 
-- [ ] **UC2 — Proof of Address Module (`proof-address`)**
+- [~] **UC2 — Proof of Address Module (`proof-address`)**
   branch: feat/module-proof-address
   files: src/modules/proof-address/
   done-when: npm test passes, npx tsc --noEmit clean
