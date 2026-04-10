@@ -18,14 +18,23 @@ The goal is a readable, well-structured codebase that developers can use as a re
 
 All WIZIDEE API calls MUST go through the Next.js backend routes — never expose credentials to the browser.
 
-### Video-First Integration Principle
+### Single-Page Stateless Video Workflow Principle
 
-All WIZIDEE document capture features MUST be built into the **video call interface as synchronous, in-session workflows**. Features MUST NOT be implemented as standalone async file upload pages separate from the video call.
+The entire application lives on one page: **`/video-call`**. This is the only
+user-facing route. All document capture, processing, and result display happen
+here without navigation or server-side session state.
 
-- Document capture happens during the active video session
-- Participants see each other while documents are being captured and processed
-- Results are displayed in real-time to both parties within the call interface
-- The video call is the container; document processing is the feature
+**Canonical user workflow (enforced for every module):**
+1. User starts a video call on `/video-call`
+2. User takes a snapshot from the live video stream
+3. User selects a data extraction module and clicks "Process"
+4. Extracted data is displayed on the same page, overlaid on or alongside
+   the snapshot — the page does NOT navigate away
+
+- `/video-call` is the ONLY user-facing page — no `/session/[id]/` or other routes
+- All state (snapshot, selected module, results) is held in React component state
+- Page refresh resets all state — intentional and correct
+- Modules MUST NOT create additional pages or routes
 
 ### Visual Verification Principle
 
@@ -41,29 +50,31 @@ before the task is considered complete. No task is done without visual proof.
 
 ### Kernel/Modules Architecture Principle
 
-The video call interface MUST be architected as a **kernel** with pluggable
-**modules**. All document processing features are modules that extend the
-kernel — never standalone pages or separate workflows.
+The **`/video-call` page is the kernel**. All document processing features are
+modules that plug into this single page — never standalone pages or separate
+workflows.
 
-**Kernel Responsibilities (The Video Call Foundation):**
+**Kernel Responsibilities (`/video-call` page):**
 - Video session management and peer connection (LiveKit)
-- Snapshot capture from the video stream (camera or screen share)
+- Snapshot capture from the live video stream
 - Module registry and lifecycle management
-- Shared UI chrome: menu system for module selection, configuration area,
-  action triggers, and results display area
+- Shared UI on `/video-call`: module selector, config area, capture/process
+  actions, and results display alongside the snapshot
 
-**Module Responsibilities (Feature Extensions):**
+**Module Responsibilities (feature extensions):**
 - Each WIZIDEE use case (Identity, RIB, Proof of Address, etc.) is a module
 - Modules register themselves with the kernel via a consistent interface
 - Modules provide: configuration UI, processing logic (via WIZIDEE APIs),
-  and result rendering components
-- Modules MUST NOT implement their own video handling or snapshot capture
+  and result rendering — all rendered within `/video-call`
+- Modules MUST NOT implement their own video handling, snapshot capture,
+  page routing, or session state
 
-**Integration Contract:**
-- User selects a module from the kernel's menu → module's config UI renders
-- User configures options → clicks "Capture" → kernel acquires snapshot
-- User clicks "Process" → module sends snapshot to WIZIDEE via kernel APIs
-- Results appear in the shared results area, visible to both call participants
+**Integration Contract (per Single-Page Workflow):**
+1. User starts video call on `/video-call`
+2. User clicks "Capture" → kernel acquires snapshot from video stream
+3. User selects a module → module config UI renders on `/video-call`
+4. User clicks "Process" → module calls WIZIDEE via `/api/wizidee/*` routes
+5. Results render on `/video-call`, alongside the snapshot — no navigation
 
 ---
 
@@ -131,34 +142,35 @@ Start with use cases 1–4 as the core MVP.
 
 ### Kernel/Modules Structure
 
-The application follows a **kernel/modules architecture** where the video call
-provides the foundation (kernel) and each WIZIDEE use case is implemented as
-a pluggable module.
+The application follows a **kernel/modules architecture** where `/video-call`
+is the kernel and each WIZIDEE use case is a pluggable module.
+There is only ONE user-facing page — `/video-call`.
 
 ```
 app/
-├── (frontend)
-│   ├── page.tsx                  # Landing / use case selector
-│   ├── session/[id]/             # Video call session (KERNEL)
-│   │   ├── page.tsx              # Kernel: video + module integration
-│   │   ├── components/
-│   │   │   ├── VideoCall.tsx     # LiveKit integration (kernel)
-│   │   │   ├── ModuleMenu.tsx    # Module selection menu
-│   │   │   ├── ConfigPanel.tsx   # Module configuration area
-│   │   │   ├── ActionBar.tsx     # Capture + Process buttons
-│   │   │   └── ResultsPanel.tsx  # Shared results display
-│   │   └── hooks/
-│   │       ├── useSnapshot.ts    # Video frame capture
-│   │       ├── useModule.ts      # Module registry access
-│   │       └── useWizideeAPI.ts  # Typed WIZIDEE client
-│   └──
+├── page.tsx                      # Redirect or minimal landing → /video-call
+├── video-call/
+│   └── page.tsx                  # KERNEL: the only user-facing page
+│
+├── components/                   # Kernel UI components (all rendered on /video-call)
+│   ├── VideoCall.tsx             # LiveKit integration
+│   ├── SnapshotCapture.tsx       # Capture frame from video stream
+│   ├── SnapshotDisplay.tsx       # Show snapshot + overlaid results
+│   ├── ModuleSelector.tsx        # Module selection menu
+│   ├── ModuleConfigPanel.tsx     # Active module's configuration UI
+│   └── ActionBar.tsx             # Capture + Process buttons
+│
+├── hooks/
+│   ├── useSnapshot.ts            # Video frame capture (kernel)
+│   ├── useWizideeAPI.ts          # Typed WIZIDEE client (kernel)
+│   └── useModule.ts              # Module registry access (kernel)
 │
 ├── modules/                      # MODULES (one per use case)
 │   ├── identity-cni/
 │   │   ├── index.ts              # Module descriptor + registration
 │   │   ├── ConfigComponent.tsx   # Document type selection
 │   │   ├── process.ts            # WIZIDEE API calls
-│   │   └── ResultComponent.tsx   # Identity card display
+│   │   └── ResultComponent.tsx   # Results rendered on /video-call
 │   ├── rib-extraction/
 │   ├── proof-address/
 │   ├── proof-income/
@@ -169,7 +181,7 @@ app/
     │   ├── recognize/route.ts    # Proxy → WIZIDEE /recognize
     │   ├── analyze/route.ts      # Proxy → WIZIDEE /analyze
     │   └── token/route.ts        # Internal token management
-    └── session/route.ts          # LiveKit session management
+    └── livekit/route.ts          # LiveKit token endpoint
 
 lib/
 ├── wizidee.ts                    # WIZIDEE API client (server-side only)

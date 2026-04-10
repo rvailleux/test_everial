@@ -2,10 +2,11 @@
 
 ## Architecture Overview
 
-This project follows a **Kernel/Modules Architecture** (see Constitution Principle VIII):
+This project follows a **Kernel/Modules Architecture** (see Constitution v2.0.0, Principles VI + VIII):
 
-- **Kernel**: The video call page (`session/[id]/page.tsx`) provides the foundation with LiveKit integration, snapshot capture, module registry, and shared UI areas (menu, config, results)
-- **Modules**: Each use case below is implemented as a pluggable module that registers with the kernel
+- **Kernel**: The `/video-call` page (`app/video-call/page.tsx`) is the ONLY user-facing route. It provides LiveKit integration, snapshot capture, module registry, and shared UI (module selector, config panel, results display)
+- **Modules**: Each use case is a pluggable module that registers with the kernel and renders within `/video-call`
+- **Workflow**: video call → snapshot → module → results displayed on the same page (stateless, no navigation)
 
 ### Module Integration Contract
 
@@ -80,25 +81,27 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - Implement `ModuleProvider` context for dependency injection
   - Create hook `useModule(id: string)` for module access
 
-- [ ] **K2 — Shared UI Areas**
-  branch: feat/kernel-ui
-  files: src/components/ModuleMenu.tsx, src/components/ConfigPanel.tsx, src/components/ActionBar.tsx, src/components/ResultsPanel.tsx
-  done-when: npm test passes, npx tsc --noEmit clean
-  - **Menu Area**: Horizontal or vertical menu showing registered modules
-  - **Config Area**: Dynamic container that renders selected module's `ConfigComponent`
-  - **Action Area**: Capture button (kernel) + Process button (triggers module.process)
-  - **Results Area**: Displays active results from any module, visible to both participants
+- [ ] **K2 — `/video-call` Page + Kernel Shell**
+  branch: feat/kernel-video-call-page
+  files: src/app/video-call/page.tsx, src/components/VideoCall.tsx, src/components/ModuleSelector.tsx, src/components/ModuleConfigPanel.tsx, src/components/ActionBar.tsx
+  done-when: npm test passes, npx tsc --noEmit clean, CDP screenshot shows /video-call renders
+  - Create `app/video-call/page.tsx` as the single user-facing page
+  - Module selector showing registered modules
+  - Config panel rendering selected module's `ConfigComponent`
+  - Action bar: Capture button (kernel) + Process button (triggers module.process)
+  - Redirect `/` to `/video-call` or show minimal landing
 
-- [ ] **K3 — Snapshot Capture System**
-  branch: feat/kernel-snapshot
-  files: src/hooks/useSnapshot.ts, src/components/SnapshotPreview.tsx
+- [ ] **K3 — Snapshot Capture + Results Display**
+  branch: feat/kernel-snapshot-display
+  files: src/components/SnapshotCapture.tsx, src/components/SnapshotDisplay.tsx, src/hooks/useSnapshot.ts
   done-when: npm test passes, npx tsc --noEmit clean
-  - Integrate with LiveKit stream to capture frames
-  - Preview snapshot before processing
-  - Store snapshot temporarily (session-only, not persisted)
+  - Capture frame from LiveKit video stream via "Capture" button
+  - Display snapshot on `/video-call` alongside results (not a separate page)
+  - Module result overlay/panel renders next to snapshot on same page
+  - State is React-only: snapshot + results reset on page refresh
 
 - [ ] **K4 — WIZIDEE Proxy Client**
-  branch: feat/wizidee-proxy
+  branch: 006-wizidee-proxy-client
   files: src/app/api/wizidee/, lib/wizidee.ts, src/hooks/useWizideeAPI.ts
   done-when: npm test passes, npx tsc --noEmit clean
   - Type-safe client for `/api/wizidee/*` routes
@@ -259,6 +262,39 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **Config options**: Fields to redact (auto-suggested from recognition), anonymization level
   - **WIZIDEE flow**: `/recognize` → `/analyze` → `/anonymize` (or consolidate)
   - **Result view**: Side-by-side original/redacted preview + download link + raw metadata
+
+---
+
+## Refactoring Plan — Clean Base for v2.0.0 Architecture
+
+**Goal**: Remove artifacts from the old `session/[id]/` architecture and establish
+the `/video-call` single-page kernel as a clean foundation before adding modules.
+
+**Trigger**: Constitution amended to v2.0.0 on 2026-04-10 (Principles VI + VIII rewritten).
+
+### R1 — Audit & Remove Dead Routes
+- [ ] Identify and delete `session/[id]/` page and related components if they exist
+- [ ] Identify and delete any standalone file-upload pages not integrated into `/video-call`
+- [ ] Check `app/api/session/route.ts` — remove if session state is being persisted server-side
+- [ ] Audit `lib/livekit.ts` for session-ID logic; simplify to stateless token generation
+
+### R2 — Consolidate Components to `/video-call`
+- [ ] Move or merge any video-call-related components into `src/components/` (kernel home)
+- [ ] Remove duplicate snapshot/capture components from old `session/` directory
+- [ ] Ensure `ModuleProvider` wraps only `/video-call`, not the whole app layout
+
+### R3 — Validate Module Registry Compatibility
+- [ ] Confirm K1 module registry (K1 done, 005-module-registry) works with new `/video-call` page structure
+- [ ] Verify `ModuleProvider`, `useModule`, `useActiveModule`, `useModuleConfig` hooks remain compatible
+- [ ] Update any module registry test fixtures that reference `session/[id]/` paths
+
+### R4 — Update Tests & CDP Baseline
+- [ ] Update existing tests to target `/video-call` instead of any old routes
+- [ ] Capture CDP baseline screenshots of the clean `/video-call` page shell (before modules added)
+- [ ] Confirm `npm test` passes clean and `npx tsc --noEmit` is error-free after refactor
+
+**Done-when**: `npm test` passes, `npx tsc --noEmit` clean, CDP screenshot of `/video-call`
+confirms the page renders as the kernel shell, no `session/[id]/` routes remain.
 
 ---
 

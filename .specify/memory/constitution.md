@@ -1,17 +1,22 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.2.1 → 1.3.0
-Modified principles: 1 added
-  VIII. Kernel/Modules Architecture (NEW)
-Rationale: New architectural principle defining the video call as a kernel
-  and document processing features as plug-in modules. Formalizes the
-  kernel/modules design pattern for all WIZIDEE feature development.
+Version change: 1.3.0 → 2.0.0
+Modified principles:
+  VI. Video-First Integration → Single-Page Stateless Video Workflow
+      Backward-incompatible redefinition: single /video-call page, fully
+      stateless, snapshot-centric workflow replaces multi-participant
+      session model and /session/[id]/ routing.
+  VIII. Kernel/Modules Architecture
+      Updated: kernel is now strictly /video-call (not session/[id]/);
+      results displayed on snapshot page rather than in a separate
+      shared results area; modules MUST NOT create additional routes.
 Added sections: none
 Removed sections: none
 Templates requiring updates:
-  ✅ .specify/templates/plan-template.md — added Principle VIII reference
-  ✅ CLAUDE.md — added Kernel/Modules Architecture section
+  ✅ .specify/templates/plan-template.md — Constitution Check updated (VI renamed)
+  ✅ CLAUDE.md — Video-First and Kernel/Modules sections rewritten
+  ✅ todo.md — Refactoring plan added, kernel tasks updated for /video-call
 Deferred TODOs: none
 -->
 
@@ -76,28 +81,39 @@ document capture frequently happens on a phone.
 - Every async operation MUST have a visible loading state
 - Extraction results MUST be shown in both human-readable card format AND
   raw JSON (for developer audience)
-- Document capture MUST support both file upload and live camera capture
+- Results MUST be displayed on the snapshot (overlaid or alongside it) on the
+  same page — never on a separate page or in a separate route
 - UI MUST work at mobile viewport widths (document photos taken on phone)
 
-Rationale: The app is shown to prospects and business stakeholders in the
-context of a video call. First impressions matter. A slow or broken UI
-undermines confidence in the WIZIDEE product itself.
+Rationale: The app is shown to prospects and business stakeholders. First
+impressions matter. A slow or broken UI undermines confidence in WIZIDEE.
 
-### VI. Video-First Integration
+### VI. Single-Page Stateless Video Workflow
 
-All WIZIDEE document capture features MUST be built into the video call
-interface as synchronous, in-session workflows. Features MUST NOT be
-implemented as standalone async file upload pages separate from the video call.
+The entire application MUST live on a single page: `/video-call`. This page
+is the only user-facing route. All document capture, processing, and result
+display happen here without page navigation or server-side session state.
 
-- Document capture happens during the active video session
-- Participants see each other while documents are being captured and processed
-- Results are displayed in real-time to both parties within the call interface
-- The video call is the container; document processing is the feature
+**The canonical user workflow — enforced for every module:**
+1. User starts a video call on `/video-call`
+2. User takes a snapshot from the live video stream
+3. User selects a data extraction module and clicks "Process"
+4. Extracted data is displayed on the same page, overlaid on or alongside
+   the snapshot — the page does NOT navigate away
 
-Rationale: The core value proposition is "document verification during a
-video call" — not "file upload with a separate video feature". Keeping
-everything in-session demonstrates the true WIZIDEE integration
-value: real-time identity verification with a human in the loop.
+**Hard constraints:**
+- `/video-call` is the ONLY user-facing page; no `/session/[id]/` or other routes
+- All UI state (snapshot, selected module, results) is held in React component
+  state — no server-side session, no database, no URL parameters for session
+- When the page is refreshed, all state resets — this is intentional and correct
+- Modules MUST NOT create additional pages or routes
+- Results MUST appear in the same viewport as the snapshot and the video feed
+
+Rationale: Stateless, single-page design maximises simplicity for a
+demonstrator. It eliminates session management complexity and makes the
+integration flow immediately legible to any developer reading the code.
+Displaying results alongside the snapshot is the literal product value:
+"here is the document — here is what WIZIDEE extracted from it."
 
 ### VII. Visual Verification via Chrome DevTools
 
@@ -118,49 +134,53 @@ direct access to the browser's internals for comprehensive verification.
 
 ### VIII. Kernel/Modules Architecture
 
-The video call interface MUST be architected as a **kernel** with pluggable
-**modules**. All document processing features are modules that extend the
-kernel — never standalone pages or separate workflows.
+The `/video-call` page is the **kernel**. All document processing features are
+**modules** that plug into this single page — never standalone pages or
+separate workflows.
 
-**Kernel Responsibilities (The Video Call Foundation):**
+**Kernel Responsibilities (the `/video-call` page):**
 - Video session management and peer connection (LiveKit)
-- Snapshot capture from the video stream (camera or screen share)
+- Snapshot capture from the live video stream
 - Module registry and lifecycle management
-- Shared UI chrome: menu system for module selection, configuration area,
-  action triggers, and results display area
+- Shared UI areas rendered on `/video-call`: module selector, config area,
+  capture/process actions, and results display alongside the snapshot
 
-**Module Responsibilities (Feature Extensions):**
+**Module Responsibilities (feature extensions):**
 - Each WIZIDEE use case (Identity, RIB, Proof of Address, etc.) is a module
 - Modules register themselves with the kernel via a consistent interface
 - Modules provide: configuration UI, processing logic (via WIZIDEE APIs),
-  and result rendering components
-- Modules MUST NOT implement their own video handling or snapshot capture
+  and result rendering — all rendered within `/video-call`
+- Modules MUST NOT implement their own video handling, snapshot capture,
+  page routing, or session state
 
-**Integration Contract:**
-- User selects a module from the kernel's menu → module's config UI renders
-- User configures options → clicks "Capture" → kernel acquires snapshot
-- User clicks "Process" → module sends snapshot to WIZIDEE via kernel APIs
-- Results appear in the shared results area, visible to both call participants
+**Integration Contract (per the Principle VI workflow):**
+1. User starts video call on `/video-call`
+2. User clicks "Capture" → kernel acquires snapshot from video stream
+3. User selects a module from the kernel's menu → module config UI renders
+4. User clicks "Process" → module calls WIZIDEE via `/api/wizidee/*` routes
+5. Results render on `/video-call`, alongside the snapshot — no navigation
 
-Rationale: This architecture enforces consistency across all use cases,
-eliminates duplication of video/snapshot logic, and makes adding new document
-types a matter of implementing the module interface. The kernel/modules
-pattern ensures that every feature naturally follows the Video-First principle
-by design — modules cannot exist outside the video call context.
+Rationale: Locking all modules to `/video-call` enforces Principle VI by
+design. Modules cannot break the single-page, stateless contract because they
+have no mechanism to create routes or persist state. Every new use case
+automatically follows the correct workflow.
 
 ## Technical Constraints
 
 - **Framework**: Next.js (App Router) with TypeScript
 - **Styling**: Tailwind CSS (or equivalent utility-first framework)
-- **Video**: LiveKit SDK for in-session document capture flows
+- **Video**: LiveKit SDK for live video capture on `/video-call`
 - **Testing**: Jest + React Testing Library (unit), Chrome DevTools Protocol (visual/E2E)
 - **Git workflow**: Trunk-based development (commit to `main`, short-lived branches < 1 day)
 - **Language**: English for code, comments, and commit messages
 - **Credentials**: Stored in `.env.local` only — `.env.local` is gitignored
+- **State**: React component state only — no server sessions, no database persistence
 
 ## Use Case Scope
 
-The following 13 use cases are in scope, implemented in priority order:
+The following 13 use cases are in scope, implemented in priority order.
+Each use case MUST be implemented as a module that plugs into `/video-call`
+per Principles VI and VIII.
 
 **MVP (UC1–UC4)**
 - UC1: Identity verification — CNI / Passport
@@ -179,8 +199,6 @@ The following 13 use cases are in scope, implemented in priority order:
 - UC12: Signature detection
 - UC13: Document anonymization
 
-Each use case MUST be implemented as a Kernel Module per Principle VIII.
-
 ## Governance
 
 - This constitution supersedes all other practices in case of conflict.
@@ -188,10 +206,10 @@ Each use case MUST be implemented as a Kernel Module per Principle VIII.
   and an update to this document before the change is implemented.
 - All feature plans and specs MUST include a Constitution Check gate that
   validates compliance with Principles I–VIII before implementation begins.
-- Principle I (Credentials), Principle VI (Video-First), Principle VII
-  (Visual Verification), and Principle VIII (Kernel/Modules) violations
-  are blocking and non-negotiable.
+- Principle I (Credentials), Principle VI (Single-Page Stateless Workflow),
+  Principle VII (Visual Verification), and Principle VIII (Kernel/Modules)
+  violations are blocking and non-negotiable.
 - Complexity deviating from Principle III MUST be justified in the
   plan's Complexity Tracking table.
 
-**Version**: 1.3.0 | **Ratified**: 2026-04-08 | **Last Amended**: 2026-04-09
+**Version**: 2.0.0 | **Ratified**: 2026-04-08 | **Last Amended**: 2026-04-10
