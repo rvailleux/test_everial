@@ -38,9 +38,9 @@
 | III. Demonstrator Clarity | ⬜ TBD | |
 | IV. Test-First (TDD) | ⬜ TBD | |
 | V. Modern, Responsive UI | ⬜ TBD | |
-| VI. Video-First Integration | ⬜ TBD | Feature built into video call interface (in-session, not async file upload) |
+| VI. Single-Page Stateless Video Workflow | ⬜ TBD | Feature lives on /video-call only; workflow: video → snapshot → module → results on same page |
 | VII. Visual Verification | ⬜ TBD | Chrome DevTools screenshots captured at multiple viewports before task complete |
-| VIII. Kernel/Modules Architecture | ⬜ TBD | Feature implemented as a module extending the video call kernel |
+| VIII. Kernel/Modules Architecture | ⬜ TBD | Feature is a module plugging into /video-call kernel; no new routes or pages created |
 
 ## Project Structure
 

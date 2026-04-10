@@ -86,7 +86,7 @@ function validateModule<TConfig>(module: Partial<WizideeModule<TConfig>>): asser
  * @returns ModuleRegistry implementation
  */
 export function createModuleRegistry(): ModuleRegistry {
-  const modules = new Map<string, WizideeModule>();
+  const modules = new Map<string, WizideeModule<any>>();
 
   return {
     register: <TConfig>(module: WizideeModule<TConfig>) => {
