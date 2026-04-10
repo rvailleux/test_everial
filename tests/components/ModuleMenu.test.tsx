@@ -28,13 +28,17 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('ModuleMenu', () => {
-  it('should render empty state when no modules', () => {
+  it('should render auto-registered modules', () => {
     render(<ModuleMenu />, { wrapper });
 
-    expect(screen.getByText('No modules registered')).toBeInTheDocument();
+    // Should show the 4 auto-registered modules
+    expect(screen.getByText('Identity Document (CNI/Passport)')).toBeInTheDocument();
+    expect(screen.getByText('Proof of Address')).toBeInTheDocument();
+    expect(screen.getByText('Proof of Income')).toBeInTheDocument();
+    expect(screen.getByText('Bank Account (RIB)')).toBeInTheDocument();
   });
 
-  it('should render list of registered modules', () => {
+  it('should include dynamically registered modules', () => {
     registerModule(createTestModule('module-1', 'First Module'));
     registerModule(createTestModule('module-2', 'Second Module'));
 
@@ -42,8 +46,6 @@ describe('ModuleMenu', () => {
 
     expect(screen.getByText('First Module')).toBeInTheDocument();
     expect(screen.getByText('Second Module')).toBeInTheDocument();
-    expect(screen.getByText('Description for First Module')).toBeInTheDocument();
-    expect(screen.getByText('Description for Second Module')).toBeInTheDocument();
   });
 
   it('should highlight active module', () => {

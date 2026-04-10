@@ -10,6 +10,12 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { WizideeModule, ModuleContextValue } from '@lib/modules/types';
 import { registry } from '@lib/modules/registry';
 
+// Side-effect imports — each module calls registerModule() at the top level
+import '@/modules/identity-cni';
+import '@/modules/proof-address';
+import '@/modules/proof-income';
+import '@/modules/rib-extraction';
+
 const ModuleContext = createContext<ModuleContextValue | null>(null);
 
 interface ModuleProviderProps {

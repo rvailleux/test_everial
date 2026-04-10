@@ -152,7 +152,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **WIZIDEE flow**: `/recognize` → `/analyze` (dbtype: address_proof)
   - **Result view**: Address block formatted + map link + raw JSON
 
-- [~] **UC3 — Proof of Income Module (`proof-income`)**
+- [x] **UC3 — Proof of Income Module (`proof-income`)**
   branch: feat/module-proof-income
   files: src/modules/proof-income/
   done-when: npm test passes, npx tsc --noEmit clean
@@ -163,7 +163,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **WIZIDEE flow**: `/recognize` → `/analyze` (dbtype: income_proof)
   - **Result view**: Income summary card + employer info + raw JSON
 
-- [ ] **UC4 — Bank Account Module (`rib-extraction`)**
+- [~] **UC4 — Bank Account Module (`rib-extraction`)**
   branch: feat/module-rib-extraction
   files: src/modules/rib-extraction/
   done-when: npm test passes, npx tsc --noEmit clean

@@ -28,19 +28,23 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('useAllModules', () => {
-  it('should return empty array when no modules registered', () => {
+  it('should return auto-registered modules by default', () => {
     const { result } = renderHook(() => useAllModules(), { wrapper });
 
-    expect(result.current).toEqual([]);
+    // 4 modules are auto-registered: identity-cni, proof-address, proof-income, rib-extraction
+    expect(result.current.length).toBeGreaterThanOrEqual(4);
+    expect(result.current.map(m => m.id)).toContain('identity-cni');
+    expect(result.current.map(m => m.id)).toContain('proof-address');
+    expect(result.current.map(m => m.id)).toContain('proof-income');
+    expect(result.current.map(m => m.id)).toContain('rib-extraction');
   });
 
-  it('should return all registered modules', () => {
+  it('should include dynamically registered modules', () => {
     registerModule(createTestModule('module-1'));
     registerModule(createTestModule('module-2'));
 
     const { result } = renderHook(() => useAllModules(), { wrapper });
 
-    expect(result.current).toHaveLength(2);
     expect(result.current.map(m => m.id)).toContain('module-1');
     expect(result.current.map(m => m.id)).toContain('module-2');
   });
