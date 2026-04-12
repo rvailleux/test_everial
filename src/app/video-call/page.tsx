@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { ModuleProvider } from '@/lib/context/ModuleProvider';
 import { ModuleSelector } from '@/components/ModuleSelector';
@@ -10,6 +10,8 @@ import { SnapshotCapture } from '@/components/SnapshotCapture';
 import { SnapshotDisplay } from '@/components/SnapshotDisplay';
 import { useActiveModule } from '@/lib/hooks/useActiveModule';
 import { useModuleProcess } from '@/lib/hooks/useModuleProcess';
+import { useDocumentDetector } from '@/hooks/useDocumentDetector';
+import { DocumentScanOverlay } from '@/components/DocumentScanOverlay';
 
 // Dynamically import LiveKitVideoCall with SSR disabled
 const LiveKitVideoCall = dynamic(() => import('@/components/LiveKitVideoCall'), {
@@ -35,6 +37,21 @@ function VideoCallKernel() {
 
   const { activeModule } = useActiveModule();
   const { result, isProcessing, error, process, clearResult } = useModuleProcess();
+
+  // Auto-scan state
+  const [autoScanEnabled, setAutoScanEnabled] = useState(true);
+  const [showCaptureToast, setShowCaptureToast] = useState(false);
+
+  // Document detection hook
+  const { boundary, overlayState } = useDocumentDetector({
+    enabled: hasJoined && autoScanEnabled && !isCapturing,
+    videoContainerRef,
+    onAutoCapture: () => {
+      handleCapture();
+      setShowCaptureToast(true);
+      setTimeout(() => setShowCaptureToast(false), 2000);
+    },
+  });
 
   /**
    * Capture a snapshot from the local video stream
@@ -195,8 +212,31 @@ function VideoCallKernel() {
           {/* Left column: Video and snapshot */}
           <div className="lg:col-span-2 space-y-4">
             {/* Video container */}
-            <div ref={videoContainerRef} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div ref={videoContainerRef} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden relative">
               <LiveKitVideoCall roomName={roomName} />
+              <DocumentScanOverlay
+                boundary={boundary}
+                overlayState={overlayState}
+                containerRef={videoContainerRef}
+              />
+              {/* Auto-scan toggle */}
+              <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
+                <label className="flex items-center gap-2 px-3 py-1.5 bg-black/50 rounded-full text-white text-sm cursor-pointer hover:bg-black/60 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={autoScanEnabled}
+                    onChange={(e) => setAutoScanEnabled(e.target.checked)}
+                    className="w-4 h-4 accent-blue-500"
+                  />
+                  <span>Auto-scan</span>
+                </label>
+              </div>
+              {/* Capture toast */}
+              {showCaptureToast && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 bg-green-500 text-white rounded-full text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                  Snapshot captured
+                </div>
+              )}
             </div>
 
             {/* Action bar */}

@@ -37,7 +37,16 @@
       "Bash(kill -9 901441 901238)",
       "Bash(git worktree:*)",
       "Bash(rm -rf .claude/worktrees/soft-munching-dawn)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(npx jest:*)",
+      "Bash(node:*)",
+      "Bash(node_modules/.bin/jest --selectProjects modules)",
+      "Bash(curl:*)",
+      "Bash(npx playwright:*)",
+      "Bash(sudo npx:*)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh add an auto-scan feature on the video streams \\(should be executed in browser\\) to detect document in the video stream \\(mainly rectangle\\), put a blue shape line around the detected document, and when the document is large enough and complete, automatically take the snapshot:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(.specify/scripts/bash/update-agent-context.sh claude:*)"
     ]
   },
   "hooks": {

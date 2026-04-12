@@ -316,6 +316,35 @@ Visit `/test-module-registry` to manually verify the module registry system.
 - N/A (in-memory registry, no persistence) (004-module-registry)
 - TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, React Testing Library, Jest (006-wizidee-proxy-client)
 - In-memory token cache (no persistent storage per Constitution) (006-wizidee-proxy-client)
+- TypeScript 5 / React 19 / Next.js 16 (App Router) + None new — uses browser Canvas API + `requestAnimationFrame`; detection algorithm is pure TS (007-auto-scan-document)
+- N/A — detection state is transient React state (007-auto-scan-document)
+
+## Auto-Scan Document Detection
+
+The kernel includes an **auto-scan feature** that detects documents in the video stream in real-time and automatically captures snapshots when conditions are met.
+
+**How it works:**
+1. Frame loop runs at 15 fps using `requestAnimationFrame`
+2. Each frame is drawn to an offscreen canvas (320×240 for speed)
+3. Pure TypeScript edge detection (Sobel operator) finds document boundaries
+4. Blue outline appears when a document is detected
+5. Outline turns green when document fills ≥30% of frame and is fully visible
+6. After 500ms stability, auto-capture triggers (with 2s cooldown)
+
+**Key files:**
+- `src/lib/detection/documentDetector.ts` — Edge detection algorithm
+- `src/hooks/useDocumentDetector.ts` — Frame loop and capture logic
+- `src/components/DocumentScanOverlay.tsx` — Canvas overlay rendering
+
+**User controls:**
+- Auto-scan toggle in bottom-left of video container (on by default)
+- Manual Capture button remains available as fallback
+- "Snapshot captured" toast appears after auto-capture
+
+**Technical notes:**
+- 100% client-side — no server calls, no ML models
+- Works with existing manual capture flow
+- Can be disabled/enabled without page reload
 
 ## Recent Changes
 - 001-uc1-identity-verification: Added TypeScript 5 / Node.js (Next.js runtime) + Next.js 16.2.2, React 19, Tailwind CSS 4, Jest + React Testing Library (to be added)
