@@ -163,7 +163,7 @@ lib/modules/*, src/app/api/wizidee/*, src/modules/*
   - **WIZIDEE flow**: `/recognize` → `/analyze` (dbtype: income_proof)
   - **Result view**: Income summary card + employer info + raw JSON
 
-- [~] **UC4 — Bank Account Module (`rib-extraction`)**
+- [x] **UC4 — Bank Account Module (`rib-extraction`)**
   branch: feat/module-rib-extraction
   files: src/modules/rib-extraction/
   done-when: npm test passes, npx tsc --noEmit clean

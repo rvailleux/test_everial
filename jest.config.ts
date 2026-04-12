@@ -63,6 +63,18 @@ const config: Config = {
       moduleNameMapper: pathAliases,
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     },
+    {
+      displayName: 'integration',
+      testEnvironment: 'node',
+      testPathIgnorePatterns: ['<rootDir>/.claude/'],
+      testMatch: ['**/tests/integration/**/*.test.ts'],
+      transform: {
+        '^.+\\.tsx?$': ['ts-jest', { tsconfig: { jsx: 'react-jsx' } }],
+      },
+      moduleNameMapper: pathAliases,
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+      testTimeout: 30_000,
+    },
   ],
 };
 

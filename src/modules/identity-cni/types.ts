@@ -38,4 +38,12 @@ export interface IdentityData {
   dateExpiration: string | null;
   /** MRZ (Machine Readable Zone) */
   mrz: string | null;
+  /** Document number */
+  numeroDocument: string | null;
+  /** Face crop returned by WIZIDEE (data URL) */
+  photo: string | null;
+  /** Place of birth */
+  lieuNaissance: string | null;
+  /** Gender ("M" or "F") */
+  sexe: string | null;
 }

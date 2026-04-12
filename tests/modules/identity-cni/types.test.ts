@@ -39,6 +39,10 @@ describe('Identity CNI Types', () => {
         dateNaissance: '1990-05-15',
         dateExpiration: '2030-05-15',
         mrz: 'IDFRADUPONT<<<<<<<<<<<<<<<<<<123456',
+        numeroDocument: '123456789',
+        photo: null,
+        lieuNaissance: 'PARIS',
+        sexe: 'M',
       };
 
       expect(data.nom).toBe('DUPONT');
@@ -46,6 +50,9 @@ describe('Identity CNI Types', () => {
       expect(data.dateNaissance).toBe('1990-05-15');
       expect(data.dateExpiration).toBe('2030-05-15');
       expect(data.mrz).toBe('IDFRADUPONT<<<<<<<<<<<<<<<<<<123456');
+      expect(data.numeroDocument).toBe('123456789');
+      expect(data.lieuNaissance).toBe('PARIS');
+      expect(data.sexe).toBe('M');
     });
 
     it('should handle partial/null identity data', () => {
@@ -55,6 +62,10 @@ describe('Identity CNI Types', () => {
         dateNaissance: null,
         dateExpiration: '2025-12-31',
         mrz: null,
+        numeroDocument: null,
+        photo: null,
+        lieuNaissance: null,
+        sexe: null,
       };
 
       expect(data.nom).toBeNull();
@@ -69,6 +80,10 @@ describe('Identity CNI Types', () => {
         dateNaissance: '1985-03-20',
         dateExpiration: '2028-03-20',
         mrz: 'P<FRA MARTIN<<PIERRE<<<<<<<<<<<<<<<<<<<<<<\n1234567890FRA850320<<<<<<<<<<<<<<<280320<<<<<<',
+        numeroDocument: null,
+        photo: null,
+        lieuNaissance: null,
+        sexe: null,
       };
 
       expect(data.mrz).toContain('\n');

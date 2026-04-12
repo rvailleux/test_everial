@@ -14,7 +14,8 @@ describe('identity-cni process', () => {
     region: 'FR',
   };
 
-  const mockBlob = new Blob(['test image'], { type: 'image/png' });
+  // Use JPEG so the PNG→JPEG browser conversion is bypassed in Node test environment
+  const mockBlob = new Blob(['test image'], { type: 'image/jpeg' });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -55,7 +56,56 @@ describe('identity-cni process', () => {
         dateNaissance: '1990-05-15',
         dateExpiration: '2030-05-15',
         mrz: 'IDFRADUPONT<<<<<<<<<<<<<<<<<<123456',
+        numeroDocument: null,
+        photo: null,
+        lieuNaissance: null,
+        sexe: null,
       });
+    });
+
+    it('should extract nom from MRZ when direct nom field is absent', async () => {
+      (fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ dbId: 'db-123', radId: 'rad-456' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            fields: {
+              mrz: 'IDFRAVAILLEUX<<C<<C<<CCCCCCCCC93I037\n1404931028781ROMAIN<<MATTHI86052504I',
+              prenom: 'ROMAIN',
+            },
+          }),
+        });
+
+      const result = await process(mockBlob, mockConfig);
+
+      expect(result.success).toBe(true);
+      expect(result.data?.nom).toBe('VAILLEUX');
+    });
+
+    it('should prefer MRZ nom when OCR nom is a truncated prefix', async () => {
+      // Simulates cni.png real-world case: OCR reads "VAI", MRZ has full "VAILLEUX"
+      (fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ dbId: 'db-123', radId: 'rad-456' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            fields: {
+              nom: 'VAI',
+              mrz: 'IDFRAVAILLEUX<<C<<C<<CCCCCCCCC93I037\n1404931028781ROMAIN<<MATTHI86052504I',
+            },
+          }),
+        });
+
+      const result = await process(mockBlob, mockConfig);
+
+      expect(result.success).toBe(true);
+      expect(result.data?.nom).toBe('VAILLEUX');
     });
 
     it('should call recognize endpoint with correct parameters', async () => {

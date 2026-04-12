@@ -87,5 +87,30 @@ export async function analyzeDocument(
     throw new Error(`Analyze failed: ${res.status}`);
   }
 
-  return res.json() as Promise<ExtractionResult>;
+  const raw = await res.json();
+  return { fields: flattenWizideeFields(raw), raw };
+}
+
+/**
+ * Flatten the nested WIZIDEE analyze response into a simple key→value map.
+ *
+ * The real API returns: validation.documents[0].pages[].fields[].result.value.value
+ * We normalise this into { fieldName: "value" } so callers don't have to
+ * traverse the hierarchy.
+ */
+function flattenWizideeFields(raw: unknown): Record<string, string | null> {
+  const pages: Array<{ fields?: Array<{ name: string; result?: { value?: { value?: unknown } } }> }> =
+    (raw as { validation?: { documents?: Array<{ pages?: unknown[] }> } })
+      ?.validation?.documents?.[0]?.pages as typeof pages ?? [];
+
+  const flat: Record<string, string | null> = {};
+  for (const page of pages) {
+    for (const field of page.fields ?? []) {
+      const val = field.result?.value?.value;
+      if (val !== undefined && val !== null) {
+        flat[field.name] = String(val);
+      }
+    }
+  }
+  return flat;
 }

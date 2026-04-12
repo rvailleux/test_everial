@@ -73,14 +73,42 @@ export async function process(
 }
 
 /**
+ * Convert a Blob to JPEG using the browser Canvas API.
+ * WIZIDEE recognition fails on PNG — JPEG is required.
+ */
+async function toJpeg(blob: Blob): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      canvas.toBlob(
+        (b) => {
+          URL.revokeObjectURL(url);
+          b ? resolve(b) : reject(new Error('JPEG conversion failed'));
+        },
+        'image/jpeg',
+        0.92,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+    img.src = url;
+  });
+}
+
+/**
  * Call WIZIDEE recognize endpoint via proxy
  *
  * @param file - Document image blob
  * @returns Recognize response with dbId and radId
  */
 async function recognizeDocument(file: Blob): Promise<RecognizeResponse> {
+  const jpeg = file.type === 'image/jpeg' ? file : await toJpeg(file);
   const formData = new FormData();
-  formData.append('file', file, 'document.png');
+  formData.append('file', jpeg, 'document.jpg');
 
   const response = await fetch('/api/wizidee/recognize', {
     method: 'POST',
@@ -108,8 +136,9 @@ async function analyzeDocument(
   dbId: string,
   radId: string
 ): Promise<AnalyzeResponse> {
+  const jpeg = file.type === 'image/jpeg' ? file : await toJpeg(file);
   const formData = new FormData();
-  formData.append('file', file, 'document.png');
+  formData.append('file', jpeg, 'document.jpg');
   formData.append('dbId', dbId);
   formData.append('radId', radId);
 
@@ -134,16 +163,58 @@ async function analyzeDocument(
  * @param analyzeResult - Raw analyze response from WIZIDEE
  * @returns Structured identity data
  */
-function extractIdentityData(analyzeResult: AnalyzeResponse): IdentityData {
+export function extractIdentityData(analyzeResult: AnalyzeResponse): IdentityData {
   const fields = analyzeResult.fields || {};
 
   return {
-    nom: extractField(fields, ['nom', 'lastName', 'surname', 'familyName', 'nomDeFamille']),
+    nom: resolveNom(fields),
     prenom: extractField(fields, ['prenom', 'firstName', 'givenName', 'prenoms']),
-    dateNaissance: extractField(fields, ['dateNaissance', 'birthDate', 'dateOfBirth', 'birthdate', 'date_de_naissance']),
-    dateExpiration: extractField(fields, ['dateExpiration', 'expiryDate', 'expirationDate', 'date_d_expiration']),
+    dateNaissance: extractField(fields, ['DateNaissance', 'dateNaissance', 'birthDate', 'dateOfBirth', 'birthdate', 'date_de_naissance']),
+    dateExpiration: extractField(fields, ['DateExpiration', 'dateExpiration', 'expiryDate', 'expirationDate', 'date_d_expiration']),
     mrz: extractMrz(fields),
+    numeroDocument: extractField(fields, ['numero', 'numeroDocument', 'documentNumber', 'idNumber', 'cardNumber', 'documentId', 'id']),
+    photo: extractField(fields, ['photo']),
+    lieuNaissance: extractField(fields, ['LieuNaissance', 'lieuNaissance', 'birthPlace', 'placeOfBirth']),
+    sexe: extractField(fields, ['sexe', 'sex', 'gender']),
   };
+}
+
+/**
+ * Resolve the surname, preferring the MRZ value when the OCR field is absent or truncated.
+ *
+ * The OCR `nom` field can be partial when something (e.g. a hand) covers part of the card.
+ * The MRZ always encodes the full surname. If the MRZ surname starts with the OCR value
+ * and is longer, the OCR was truncated and the MRZ value is authoritative.
+ */
+function resolveNom(fields: Record<string, unknown>): string | null {
+  const ocr = extractField(fields, ['nom', 'lastName', 'surname', 'familyName', 'nomDeFamille']);
+  const mrz = extractNomFromMrz(fields);
+
+  if (!ocr) return mrz;
+  if (!mrz) return ocr;
+  // OCR is a prefix of the MRZ surname → OCR was truncated, trust MRZ
+  if (mrz.startsWith(ocr) && mrz.length > ocr.length) return mrz;
+  return ocr;
+}
+
+/**
+ * Parse the surname from MRZ line 1 as a fallback when the direct OCR field is absent.
+ *
+ * CNI format:  IDFRA<SURNAME<<GIVEN<<...
+ * Passport:    P<FRA<SURNAME<<GIVEN<<...
+ *
+ * @param fields - Field dictionary from WIZIDEE
+ * @returns Surname extracted from MRZ, or null
+ */
+function extractNomFromMrz(fields: Record<string, unknown>): string | null {
+  const mrz = extractMrz(fields);
+  if (!mrz) return null;
+  const line1 = mrz.split('\n')[0];
+  // CNI:      IDFRA<surname<<  (no < between country and surname)
+  // Passport: P<FRA<surname<<  (< between each token)
+  const match = line1.match(/^[IP][A-Z]?<*[A-Z]{3}<*([A-Z]+)<</);
+  if (!match) return null;
+  return match[1];
 }
 
 /**
